@@ -1,0 +1,36 @@
+/* 图标样式 */
+
+.bg-img-as-icon(@width, @height: @width) {
+	background-size: @width @height;
+	background-position: 0% 50%;
+	background-repeat: no-repeat;
+}
+
+.head_s_f, .head_t_f {
+	float: right;
+	padding: 0 16px 0 30px;
+	.bg-img-as-icon(24px);
+	height: 96px;
+	line-height: 96px;
+	color: #999;
+}
+.head_s_f {
+	background-image: url(../icons/student_f.png);
+}
+.head_t_f {
+	background-image: url(../icons/teacher_f.png);
+}
+.logo {
+	display: inline-block;
+	text-align: justify;
+	line-height: 20px;
+	padding: 0 0 0 50px;
+	.bg-img-as-icon(40px);
+	background-image: url(../icons/logo.png);
+	a {
+		color: inherit;
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+}

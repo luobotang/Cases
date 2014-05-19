@@ -1,0 +1,35 @@
+.case_preview {
+	padding: 5px 0;
+	border: 1px solid #eee;
+	.preview_img_wrapper, .preview_info {
+		float: left;
+		height: 60px;
+	}
+	.preview_img_wrapper {
+		width: 80px;
+		img {
+			display: block;
+			margin: 0 auto;
+			max-height: 100%;
+		}
+	}
+	.preview_info {
+		p {
+			line-height: 30px;
+			font-size: 14px;
+		}
+		.name {
+			color: #4BA9E6;
+		}
+		.date {
+			color: #4BA9E6;
+			font-style: italic;
+		}
+	}
+	// fix float
+	&:before, &:after {
+		content: "";
+		display: block;
+		clear: both;
+	}
+}

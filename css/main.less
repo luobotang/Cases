@@ -1,0 +1,66 @@
+@charset "UTF-8";
+
+// 主题颜色-蓝色
+@theme-color: rgb(75, 169, 230);
+
+// 高宽
+@head-height: 96px;
+
+.opacity(@opacity: 0.5) {
+	@opacityPercentage: @opacity * 100;
+	opacity: @opacity;
+	filter: ~"alpha(opacity=@{opacityPercentage})";
+}
+
+// 基本标签格式
+* {
+	margin: 0;
+	padding: 0;
+}
+body {
+	font-family: "Microsoft YaHei";
+	font-size: 16px;
+	color: #333;
+	width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+	font-weight: bold;
+	text-align: left;
+	font-family: Arial, SimSun;
+	text-shadow: 1px 1px #fff, 2px 3px #ddd;
+	line-height: 1em;
+	margin-bottom: 1em;
+}
+h1 {
+	font-size: 28px;
+	padding-bottom: 8px;
+	border-bottom: 1px dashed #999;
+}
+h2, h3, h4 {
+	font-size: 24px;
+}
+p {
+	text-align: justify;
+	line-height: 2;
+}
+a {
+	text-decoration: none;
+}
+li {
+	list-style: none outside none;
+}
+
+// import other less files
+@import "layout.less";
+@import "icon.less";
+
+@import "query.less";
+@import "preview.less";
+
+@import "table_records.less";
+@import "order_list.less";
+@import "case_content.less";
+@import "image_view.less";
+@import "catalog.less";
+@import "image.less";
+@import "column.less";

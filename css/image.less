@@ -1,0 +1,22 @@
+/* --------------------------- image --------------------------- */
+@img-max-width: 250px;
+@img-max-height: 250px;
+.img {
+	float: left;
+	padding: 5px;
+	border: 1px solid #e5e5e5;
+	border-radius: 3px;
+	margin: 0 0 1em 2em;
+	img {
+		display: block;
+		background-color: #222;
+		cursor: pointer;
+		clear: both;
+		max-height: @img-max-height;
+		max-width: @img-max-width;
+	}
+	// 上下牙弓图像由于是拍的镜子里的影像，需要上下翻转
+	&.rotate img {
+		transform: rotateX(180deg);
+	}
+}

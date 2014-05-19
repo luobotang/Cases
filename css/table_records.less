@@ -1,0 +1,41 @@
+// 检查结果表格
+@table-th-bg-color: rgb(235, 235, 235);
+@table-tr-odd-bg-color: rgb(240, 240, 240);
+@table-tr-even-bg-color: white;
+table.result {
+	border-collapse: collapse;
+	border: 1px solid #e5e5e5;
+	width: 100%;
+	text-align: left;
+	font-size: 14px;
+	margin-bottom: 16px;
+	font-family: Arial, SimSun;
+	th, td {
+		padding: 5px 8px;
+		border: 1px solid #e5e5e5;
+	}
+	th {
+		vertical-align: baseline;
+		background-color: @table-th-bg-color;
+	}
+	td {
+		vertical-align: text-top;
+	}
+	tr {
+		&:nth-child(odd) {
+			background-color: @table-tr-odd-bg-color;
+		}
+		&:nth-child(even) {
+			background-color: @table-tr-even-bg-color;
+		}
+	}
+	td{
+		&:nth-child(1) {
+			color: @theme-color;
+			width: 33%;
+		}
+		&:nth-child(2) {
+			width: 33%;
+		}
+	}
+}

@@ -1,0 +1,22 @@
+// 分栏布局
+.col {
+	width: 100%;
+	min-height: 200px;
+	margin-bottom: 1em;
+}
+.col > .record {
+	padding-left: 2em;
+}
+.col:before, .col:after {
+	content: "";
+	display: block;
+	clear: both;
+}
+.col-l {
+	float: left;
+	width: 50%;
+}
+.col-r {
+	float: left;
+	width: 50%;
+}
