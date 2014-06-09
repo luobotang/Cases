@@ -1,0 +1,22 @@
+// 牙列表格样式
+table.dentition {
+	border-collapse: collapse;
+	td:nth-child(1) {
+		text-align: right;
+		padding-right: 10px;
+		border-right: 1px solid #ccc;
+	}
+	td:nth-child(2) {
+		text-align: left;
+		padding-left: 10px;
+	}
+	td {
+		padding: 0;
+		min-width: 75px;
+		.null {
+			display: inline-block;
+			width: 1em;
+			height: 1em;
+		}
+	}
+}

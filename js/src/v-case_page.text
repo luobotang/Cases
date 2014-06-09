@@ -12,16 +12,24 @@
 <h1>颜面检查<br /><span class="en">Evaluation of facial morphometrics</span></h1>
 <h2>正面观<br /><span class="en">Frontal examination</span></h2>
 <div class="col">
-	<div class="img">{img-正面-正常-画线}</div>
-	<div class="img">{img-正面-微笑-画线}</div>
+	<div class="img">
+	    {img-正面-正常}
+	    <a class="img_link" onclick="{url-正面-正常-画线}">三等分线</a>
+	</div>
+	<div class="img">
+	    {img-正面-微笑}
+	    <a class="img_link" onclick="{url-正面-微笑-画线}">中分线</a>
+	</div>
 </div>
 <div class="col">{data-正面观}</div>
 <h2>侧面观<br /><span class="en">lateral examination</span></h2>
 <div class="col">
 	<div class="img">{img-侧面-45度}</div>
-	<div class="img">{img-侧面-90度}</div>
-	<div class="img">{img-侧面-90度-画线}</div>
-	<div class="img">{img-侧面-90度-画线1}</div>
+	<div class="img">
+	    {img-侧面-90度}
+	    <a class="img_link" onclick="{url-侧面-90度-画线}">面型线</a>
+	    <a class="img_link" onclick="{url-侧面-90度-画线1}">唇部位置线</a>
+	</div>
 </div>
 <div class="col">{data-侧面观}</div>
 
@@ -70,11 +78,19 @@
 
 <h1>影像学检查</h1>
 <h2>全口曲面断层片<br /><span class="en">full mouth panoramic radiographs</span></h2>
+<div class="col"><div class="img">{img-全口曲面断层片}</div></div>
 <div class="col">{data-全口曲面断层片}</div>
 <h2>头颅侧位片<br /><span class="en">cephalometrics</span></h2>
-<table class="col result">
+<div class="col"><div class="img">{img-头颅侧位片}</div></div>
+<table class="result">
+  <thead>
+    <tr>
+      <th class="field1">测量项目</th>
+      <th class="field2">正常值</th>
+      <th class="field3">测量值</th>
+    </tr>
+  </thead>
   <tbody>
-    <tr><th>测量项目</th><th>正常值</th><th>测量值</th></tr>
     {record-头颅侧位片}
   </tbody>
 </table>
@@ -86,6 +102,8 @@
 
 <h1>矫治方案<br /><span class="en">Treatment program</span></h1>
 <div class="col">{data-矫治方案}</div>
+<h2>矫治步骤</h2>
+<ol class="col">{list-矫治步骤}</ol>
 
 <h1>注意事项<br /><span class="en">Precautions</span></h1>
 <ol class="col">{list-注意事项}</ol>

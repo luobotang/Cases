@@ -16,7 +16,9 @@ define(function () {
 			"下牙弓": baseUrl + "下牙弓.jpg",
 			"左侧咬合": baseUrl + "左侧咬合.jpg",
 			"右侧咬合": baseUrl + "右侧咬合.jpg",
-			"覆HE覆盖": baseUrl + "覆HE覆盖.jpg"
+			"覆HE覆盖": baseUrl + "覆HE覆盖.jpg",
+			"全口曲面断层片": baseUrl + "全口曲面断层片.jpg",
+			"头颅侧位片": baseUrl + "头颅侧位片.jpg"
 		}
 	}
 

@@ -16,16 +16,44 @@ function (CasePage, EnTerms, CompImgs, ImageViewer) {
 			en = "<br /><span class='en'>" + EnTerms[key] + "</span>";
 		}
 
+		// 牙列以对象方式记录，包含“上”、“下”属性
+		if ($.isPlainObject(value)) {
+			value = renderDentition(value);
+		} else if ($.isArray(value)) {
+			value = value.join("<br />");
+		}
+
 		return "<div class='record'><div class='key'>" + 
 		"<span class='name" + hasImg + "' " + showImg + ">" + key + "</span>" + en + "</div>" +
-		"<div class='value'>" + parseArray(value) + "</div></div>";
+		"<div class='value'>" + value + "</div></div>";
 	};
 
 	function renderList(id, item) {
 		return "<li><p>" + parseArray(item) + "</p></li>";
 	};
 
-	
+	function renderDentition(item) {
+		return "<table class='dentition'>" +
+			renderDetitionRow(item["上"]) +
+			renderDetitionRow(item["下"]) +
+		"</table>";
+	}
+
+	function renderDetitionRow(text) {
+		var array = text.split("|");
+		var span = "<span class='null'></span>";
+		if (!array || array.length !== 2) {
+			return "<tr>" +
+				"<td>" + span + "</td>" +
+				"<td>" + span + "</td>" +
+			"</tr>";
+		} else {
+			return "<tr>" +
+				"<td>" + ($.trim(array[0]) || span) + "</td>" +
+				"<td>" + ($.trim(array[1]) || span) + "</td>" +
+			"</tr>";
+		}
+	}
 
 	function renderRecords(name, mValue) {
 
@@ -65,6 +93,7 @@ function (CasePage, EnTerms, CompImgs, ImageViewer) {
 	}
 
 	function renderPage(caseObj, caseImgs) {
+		var baseUrl = "";
 		return CasePage.replace(
 		// 返回由数据填充的 html 文本
 		// 1. img
@@ -91,14 +120,13 @@ function (CasePage, EnTerms, CompImgs, ImageViewer) {
 		// 3. list
 		/{list-([^}]+)}/g, function (match, name) {
 			var list = caseObj[name],
-				html;
-			if (list) {
 				html = "";
+			if (list) {
 				list.forEach(function (item, index) {
 					html += renderList(index, item);
-				})
-				return html;
+				});
 			}
+			return html;
 		}).replace(
 		// 4.records
 		/{record-([^}]+)}/g, function (match, name) {
@@ -112,6 +140,10 @@ function (CasePage, EnTerms, CompImgs, ImageViewer) {
 				}
 				return html;
 			}
+		})
+		// 5.图像路径
+		.replace(/{url-([^}]+)}/g, function (match, name) {
+			return "ImageViewer.show('" + caseImgs[name] + "')";
 		});
 	};
 

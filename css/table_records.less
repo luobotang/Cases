@@ -29,13 +29,10 @@ table.result {
 			background-color: @table-tr-even-bg-color;
 		}
 	}
-	td{
-		&:nth-child(1) {
-			color: @theme-color;
-			width: 33%;
-		}
-		&:nth-child(2) {
-			width: 33%;
-		}
+	td:nth-child(1) {
+		color: @theme-color;
+	}
+	th.field1, th.field2 {
+		width: 33%;
 	}
 }
