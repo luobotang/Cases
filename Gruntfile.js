@@ -7,18 +7,24 @@ module.exports = function (grunt) {
 					compress: true
 				},
 				files: {
-					"css/main.css": "less/main.less"
+					"app/css/main.css": "less/main.less"
 				}
 			}
 		},
 		browserify: {
-			index: {
-				src: '',
-				dest: ''
+			options: {
+				transform: ['coffeeify'],
+				browserifyOptions: {
+					extensions: ['.js', '.coffee']
+				}
 			},
-			casepage: {
-				src: '',
-				dest: ''
+			p_index: {
+				src: 'js/index.main.js',
+				dest: 'app/js/index.js'
+			},
+			P_case: {
+				src: 'js/case.main.js',
+				dest: 'app/js/case.js'
 			}
 		}
 	});

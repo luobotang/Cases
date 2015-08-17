@@ -1,6 +1,6 @@
 {
   "name": "luobotang-cases",
-  "version": "0.9.6",
+  "version": "0.1.0",
   "description": "Just do it for Mickey!",
   "main": "app.js",
   "scripts": {
@@ -17,8 +17,12 @@
   },
   "homepage": "https://github.com/luobotang/Cases",
   "devDependencies": {
+    "coffeeify": "^1.1.0",
     "grunt": "^0.4.5",
     "grunt-browserify": "^4.0.0",
     "grunt-contrib-less": "^0.11.1"
+  },
+  "dependencies": {
+    "jquery": "^1.11.3"
   }
 }
