@@ -23,13 +23,14 @@ $(document.body).click(function (e) {
 });
 
 // 根据查询字符串的内容获取路径
-var p = decodeURIComponent(window.location.search.replace("?p=", ""));
+var path = decodeURIComponent(window.location.search.replace("?p=", ""));
 
-CaseQuery.getCaseInfo(p, function (data, path) {
-	document.title = data["基本信息"]["姓名"] + " - " + document.title;
-	$("#content").html(PageRender.render(data, CaseImgs.from(path)));
-	Catalog.create();
-	initImgs();
-}, function () {
-	$("#content").html("抱歉，没有查找到相关信息");
-});
+CaseQuery.getCaseInfo(path)
+	.done(function (data) {
+		document.title = data["基本信息"]["姓名"];
+		$("#content").html(PageRender.render(data, CaseImgs.from(path)));
+		Catalog.create();
+		initImgs();
+	}).fail(function () {
+		$("#content").html("抱歉，没有查找到相关信息");
+	});

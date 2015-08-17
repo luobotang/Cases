@@ -4,8 +4,10 @@ var Query = require('./w-query');
 var CaseQuery = require('./m-case_query');
 
 var ele_query = document.getElementById("query");
+
 Query.init(queryCase, CaseQuery.getCasePaths);
 Query.appendTo(ele_query);
+
 function queryCase(name) {
 	CaseQuery.queryPath(name, function (path) {
 		if (path) {
@@ -15,24 +17,17 @@ function queryCase(name) {
 		}
 	});
 }
-},{"./m-case_query":2,"./w-query":5}],2:[function(require,module,exports){
+},{"./m-case_query":2,"./w-query":6}],2:[function(require,module,exports){
 // 查询模块，使得能够根据用户输入信息查找指定患者的相关信息
 // 病例列表
 
 var $ = require('jquery');
+var CasesWebUtils = require('./utils/CasesWebUtils');
 
 var caselist;
-init();
-
-function init(onsuccess, onfail) {
-	$.get("cases/caselist.txt", function (data) {
-		caselist = data.split("\r\n");
-		caselist.sort();
-		$.isFunction(onsuccess) && onsuccess(caselist);
-	}).fail(function () {
-		$.isFunction(onfail) && onfail();
-	});
-}
+CasesWebUtils.getCaseList().done(function (data) {
+	caselist = data;
+});
 
 // 根据条件查询病例列表，返回满足条件的病例的路径
 // replaceFunc 用于对病例路径进行替换
@@ -65,40 +60,40 @@ function getCasePaths(condition, replaceFunc) {
 }
 
 // 查询路径
-function queryPath(name, onsuccess, onfail) {
+function queryPath(name, done) {
 	// 未初始化病例列表时，先进行初始化
 	if (caselist) {
-		var path = getPathBy(name);
-		path
-			? $.isFunction(onsuccess) && onsuccess(path)
-			: $.isFunction(onfail) && onfail(path);
-	} else {
-		init(function () {
-			queryPath(name, onsuccess, onfail);
-		}, onfail)
+		findPathThen(name, done);
 	}
+
+	CasesWebUtils.getCaseList()
+		.done(function (data) {
+			caselist = data;
+			findPathThen(name, done);
+		}).fail(function () {
+			done(null);
+		});
 }
 
-function getPathBy(name) {
+function findPathThen(path, done) {
+	var index = findePath(name);
+	return done(index > -1 ? caselist[index] : null);
+}
+
+function findePath(path) {
 	name = name.trim();
 	// 从后向前查找，首先返回最后录入的内容
 	for (var i = caselist.length - 1; i >= 0; i--) {
 		var path = caselist[i];
 		if (path === name) {
-			return "cases/" + path + "/";
+			return i;
 		}
 	}
-	return null;
+	return -1;
 }
 
-// 根据名称获取病例信息
-// onsuccess(data, path)
-function getCaseInfo(name, onsuccess, onfail) {
-	queryPath(name, function (path) {
-		$.getJSON(path + "case.txt", function (data) {
-			onsuccess(data, path);
-		}).fail(onfail);
-	}, onfail);
+function getCaseInfo(path) {
+	return CasesWebUtils.getCaseInfo(path);
 }
 
 module.exports = {
@@ -106,7 +101,43 @@ module.exports = {
 	getCaseInfo: getCaseInfo,
 	getCasePaths: getCasePaths
 };
-},{"jquery":6}],3:[function(require,module,exports){
+},{"./utils/CasesWebUtils":3,"jquery":7}],3:[function(require,module,exports){
+var $ = require('jquery')
+
+var URL_CASE_LIST = "cases/caselist.txt"
+
+module.exports = {
+
+	getCaseList: function () {
+		var d = $.Deferred();
+		$.get(URL_CASE_LIST)
+			.done(function (data) {
+				if (typeof data === 'string') {
+					caselist = data.split("\r\n");
+					caselist.sort();
+					d.resolve(caselist);
+				}
+			})
+			.always(function () {
+				d.reject();
+			});
+		return d.promise();
+	},
+
+	getCaseInfo: function (path) {
+		var d = $.Deferred();
+		$.getJSON('cases/' + path + '/case.txt')
+			.done(function (data) {
+				if (data) {
+					d.resolve(data);
+				}
+			}).fail(function () {
+				d.reject();
+			});
+		return d.promise();
+	}
+}
+},{"jquery":7}],4:[function(require,module,exports){
 module.exports = {
 	formatDate: function (date) {
 		return (
@@ -116,7 +147,7 @@ module.exports = {
 		);
 	}
 }
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var $, DateUtils;
 
 $ = require('jquery');
@@ -132,7 +163,7 @@ exports.create = function(path) {
 };
 
 
-},{"./utils/DateUtils":3,"jquery":6}],5:[function(require,module,exports){
+},{"./utils/DateUtils":4,"jquery":7}],6:[function(require,module,exports){
 var $ = require('jquery');
 
 var w_pre = require('./w-preview');
@@ -187,9 +218,7 @@ function hideMessage() {
 	ele_message.hide();
 }
 function showPreview(path) {
-	ele_pre.html("");
-	ele_pre.append(w_pre.create(path));
-	ele_pre.show();
+	ele_pre.html(w_pre.create(path)).show();
 }
 function hidePreview() {
 	ele_pre.hide();
@@ -243,7 +272,7 @@ module.exports = {
 	showMessage: showMessage
 };
 
-},{"./w-preview":4,"jquery":6}],6:[function(require,module,exports){
+},{"./w-preview":5,"jquery":7}],7:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v1.11.3
  * http://jquery.com/

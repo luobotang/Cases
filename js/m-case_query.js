@@ -2,19 +2,12 @@
 // 病例列表
 
 var $ = require('jquery');
+var CasesWebUtils = require('./utils/CasesWebUtils');
 
 var caselist;
-init();
-
-function init(onsuccess, onfail) {
-	$.get("cases/caselist.txt", function (data) {
-		caselist = data.split("\r\n");
-		caselist.sort();
-		$.isFunction(onsuccess) && onsuccess(caselist);
-	}).fail(function () {
-		$.isFunction(onfail) && onfail();
-	});
-}
+CasesWebUtils.getCaseList().done(function (data) {
+	caselist = data;
+});
 
 // 根据条件查询病例列表，返回满足条件的病例的路径
 // replaceFunc 用于对病例路径进行替换
@@ -47,40 +40,40 @@ function getCasePaths(condition, replaceFunc) {
 }
 
 // 查询路径
-function queryPath(name, onsuccess, onfail) {
+function queryPath(name, done) {
 	// 未初始化病例列表时，先进行初始化
 	if (caselist) {
-		var path = getPathBy(name);
-		path
-			? $.isFunction(onsuccess) && onsuccess(path)
-			: $.isFunction(onfail) && onfail(path);
-	} else {
-		init(function () {
-			queryPath(name, onsuccess, onfail);
-		}, onfail)
+		findPathThen(name, done);
 	}
+
+	CasesWebUtils.getCaseList()
+		.done(function (data) {
+			caselist = data;
+			findPathThen(name, done);
+		}).fail(function () {
+			done(null);
+		});
 }
 
-function getPathBy(name) {
+function findPathThen(path, done) {
+	var index = findePath(name);
+	return done(index > -1 ? caselist[index] : null);
+}
+
+function findePath(path) {
 	name = name.trim();
 	// 从后向前查找，首先返回最后录入的内容
 	for (var i = caselist.length - 1; i >= 0; i--) {
 		var path = caselist[i];
 		if (path === name) {
-			return "cases/" + path + "/";
+			return i;
 		}
 	}
-	return null;
+	return -1;
 }
 
-// 根据名称获取病例信息
-// onsuccess(data, path)
-function getCaseInfo(name, onsuccess, onfail) {
-	queryPath(name, function (path) {
-		$.getJSON(path + "case.txt", function (data) {
-			onsuccess(data, path);
-		}).fail(onfail);
-	}, onfail);
+function getCaseInfo(path) {
+	return CasesWebUtils.getCaseInfo(path);
 }
 
 module.exports = {

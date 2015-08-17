@@ -25,18 +25,19 @@ $(document.body).click(function (e) {
 });
 
 // 根据查询字符串的内容获取路径
-var p = decodeURIComponent(window.location.search.replace("?p=", ""));
+var path = decodeURIComponent(window.location.search.replace("?p=", ""));
 
-CaseQuery.getCaseInfo(p, function (data, path) {
-	document.title = data["基本信息"]["姓名"] + " - " + document.title;
-	$("#content").html(PageRender.render(data, CaseImgs.from(path)));
-	Catalog.create();
-	initImgs();
-}, function () {
-	$("#content").html("抱歉，没有查找到相关信息");
-});
+CaseQuery.getCaseInfo(path)
+	.done(function (data) {
+		document.title = data["基本信息"]["姓名"];
+		$("#content").html(PageRender.render(data, CaseImgs.from(path)));
+		Catalog.create();
+		initImgs();
+	}).fail(function () {
+		$("#content").html("抱歉，没有查找到相关信息");
+	});
 
-},{"./components/catalog":2,"./m-case_query":3,"./m-page_render":4,"./v-case_imgs":6,"image-viewer":10,"jquery":13}],2:[function(require,module,exports){
+},{"./components/catalog":2,"./m-case_query":3,"./m-page_render":4,"./v-case_imgs":7,"image-viewer":11,"jquery":14}],2:[function(require,module,exports){
 // params will change the default setting of Catalog
 
 var $ = require('jquery');
@@ -204,24 +205,17 @@ module.exports = {
 	create: create
 };
 
-},{"../utils/lazy-invoke":5,"jquery":13}],3:[function(require,module,exports){
+},{"../utils/lazy-invoke":6,"jquery":14}],3:[function(require,module,exports){
 // 查询模块，使得能够根据用户输入信息查找指定患者的相关信息
 // 病例列表
 
 var $ = require('jquery');
+var CasesWebUtils = require('./utils/CasesWebUtils');
 
 var caselist;
-init();
-
-function init(onsuccess, onfail) {
-	$.get("cases/caselist.txt", function (data) {
-		caselist = data.split("\r\n");
-		caselist.sort();
-		$.isFunction(onsuccess) && onsuccess(caselist);
-	}).fail(function () {
-		$.isFunction(onfail) && onfail();
-	});
-}
+CasesWebUtils.getCaseList().done(function (data) {
+	caselist = data;
+});
 
 // 根据条件查询病例列表，返回满足条件的病例的路径
 // replaceFunc 用于对病例路径进行替换
@@ -254,40 +248,40 @@ function getCasePaths(condition, replaceFunc) {
 }
 
 // 查询路径
-function queryPath(name, onsuccess, onfail) {
+function queryPath(name, done) {
 	// 未初始化病例列表时，先进行初始化
 	if (caselist) {
-		var path = getPathBy(name);
-		path
-			? $.isFunction(onsuccess) && onsuccess(path)
-			: $.isFunction(onfail) && onfail(path);
-	} else {
-		init(function () {
-			queryPath(name, onsuccess, onfail);
-		}, onfail)
+		findPathThen(name, done);
 	}
+
+	CasesWebUtils.getCaseList()
+		.done(function (data) {
+			caselist = data;
+			findPathThen(name, done);
+		}).fail(function () {
+			done(null);
+		});
 }
 
-function getPathBy(name) {
+function findPathThen(path, done) {
+	var index = findePath(name);
+	return done(index > -1 ? caselist[index] : null);
+}
+
+function findePath(path) {
 	name = name.trim();
 	// 从后向前查找，首先返回最后录入的内容
 	for (var i = caselist.length - 1; i >= 0; i--) {
 		var path = caselist[i];
 		if (path === name) {
-			return "cases/" + path + "/";
+			return i;
 		}
 	}
-	return null;
+	return -1;
 }
 
-// 根据名称获取病例信息
-// onsuccess(data, path)
-function getCaseInfo(name, onsuccess, onfail) {
-	queryPath(name, function (path) {
-		$.getJSON(path + "case.txt", function (data) {
-			onsuccess(data, path);
-		}).fail(onfail);
-	}, onfail);
+function getCaseInfo(path) {
+	return CasesWebUtils.getCaseInfo(path);
 }
 
 module.exports = {
@@ -295,7 +289,7 @@ module.exports = {
 	getCaseInfo: getCaseInfo,
 	getCasePaths: getCasePaths
 };
-},{"jquery":13}],4:[function(require,module,exports){
+},{"./utils/CasesWebUtils":5,"jquery":14}],4:[function(require,module,exports){
 // 根据输入的患者数据，生成渲染页面
 
 var $ = require('jquery');
@@ -454,7 +448,43 @@ function renderPage(caseObj, caseImgs) {
 module.exports = {
 	render: renderPage
 };
-},{"./v-case_page":7,"./v-comp_imgs":8,"./v-english_terms":9,"image-viewer":10,"jquery":13}],5:[function(require,module,exports){
+},{"./v-case_page":8,"./v-comp_imgs":9,"./v-english_terms":10,"image-viewer":11,"jquery":14}],5:[function(require,module,exports){
+var $ = require('jquery')
+
+var URL_CASE_LIST = "cases/caselist.txt"
+
+module.exports = {
+
+	getCaseList: function () {
+		var d = $.Deferred();
+		$.get(URL_CASE_LIST)
+			.done(function (data) {
+				if (typeof data === 'string') {
+					caselist = data.split("\r\n");
+					caselist.sort();
+					d.resolve(caselist);
+				}
+			})
+			.always(function () {
+				d.reject();
+			});
+		return d.promise();
+	},
+
+	getCaseInfo: function (path) {
+		var d = $.Deferred();
+		$.getJSON('cases/' + path + '/case.txt')
+			.done(function (data) {
+				if (data) {
+					d.resolve(data);
+				}
+			}).fail(function () {
+				d.reject();
+			});
+		return d.promise();
+	}
+}
+},{"jquery":14}],6:[function(require,module,exports){
 var DEFAULT_DELAY_TIME = 50; //ms
 
 module.exports = function (fn, delay) {
@@ -474,10 +504,11 @@ module.exports = function (fn, delay) {
 		}, delay);
 	};
 };
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 // 根据指定路径返回包含所有图像路径的对象
 
-function generateFromPath(baseUrl) {
+function generateFromPath(path) {
+	var baseUrl = 'cases/' + path + '/';
 	return {
 		"正面-正常": baseUrl + "正面-正常.jpg",
 		"正面-正常-画线": baseUrl + "正面-正常-画线.jpg",
@@ -502,11 +533,11 @@ module.exports = {
 	from: generateFromPath
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 module.exports = "<h1>基本信息<br /><span class=\"en\">Basic Information</span></h1>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-正面-微笑}</div>\n	</div>\n	<div class=\"col-r\">{data-基本信息}</div>\n</div>\n\n<h1>病史回顾<br /><span class=\"en\">Medical History</span></h1>\n<div class=\"col\">{data-病史回顾}</div>\n\n<h1>颜面检查<br /><span class=\"en\">Evaluation of facial morphometrics</span></h1>\n<h2>正面观<br /><span class=\"en\">Frontal examination</span></h2>\n<div class=\"col\">\n	<div class=\"img\">\n	    {img-正面-正常}\n	    <a class=\"img_link\" onclick=\"{url-正面-正常-画线}\">三等分线</a>\n	</div>\n	<div class=\"img\">\n	    {img-正面-微笑}\n	    <a class=\"img_link\" onclick=\"{url-正面-微笑-画线}\">中分线</a>\n	</div>\n</div>\n<div class=\"col\">{data-正面观}</div>\n<h2>侧面观<br /><span class=\"en\">lateral examination</span></h2>\n<div class=\"col\">\n	<div class=\"img\">{img-侧面-45度}</div>\n	<div class=\"img\">\n	    {img-侧面-90度}\n	    <a class=\"img_link\" onclick=\"{url-侧面-90度-画线}\">面型线</a>\n	    <a class=\"img_link\" onclick=\"{url-侧面-90度-画线1}\">唇部位置线</a>\n	</div>\n</div>\n<div class=\"col\">{data-侧面观}</div>\n\n<h1>颞下颌关节检查<br /><span class=\"en\">temporomandibular joint</span></h1>\n<div class=\"col\">{data-颞下颌关节检查}</div>\n\n<h1>牙合检查<br /><span class=\"en\">occlusion examination</span></h1>\n<h2>牙列<br /><span class=\"en\">permanent dentition</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-全牙列}</div>\n	</div>\n	<div class=\"col-r\">{data-全牙列}</div>\n</div>\n<h2>覆HE覆盖<br /><span class=\"en\">overbite & overjet</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-覆HE覆盖}</div>\n	</div>\n	<div class=\"col-r\">{data-覆HE覆盖}</div>\n</div>\n<h2>咬合关系<br /><span class=\"en\">moral relationship</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-左侧咬合}</div>\n	</div>\n	<div class=\"col-r\">{data-左侧咬合关系}</div>\n</div>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-右侧咬合}</div>\n	</div>\n	<div class=\"col-r\">{data-右侧咬合关系}</div>\n</div>\n<h2>牙弓形态分析<br /><span class=\"en\">symmetry of dental arch</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img rotate\">{img-上牙弓}</div>\n		<div class=\"img rotate\">{img-下牙弓}</div>\n	</div>\n	<div class=\"col-r\">{data-牙弓形态分析}</div>\n</div>\n\n<h1>模型分析<br /><span class=\"en\">dental cast analysis</span></h1>\n<div class=\"col\">{data-模型分析}</div>\n\n<h1>影像学检查</h1>\n<h2>全口曲面断层片<br /><span class=\"en\">full mouth panoramic radiographs</span></h2>\n<div class=\"col\"><div class=\"img\">{img-全口曲面断层片}</div></div>\n<div class=\"col\">{data-全口曲面断层片}</div>\n<h2>头颅侧位片<br /><span class=\"en\">cephalometrics</span></h2>\n<div class=\"col\"><div class=\"img\">{img-头颅侧位片}</div></div>\n<table class=\"result\">\n  <thead>\n    <tr>\n      <th class=\"field1\">测量项目</th>\n      <th class=\"field2\">正常值</th>\n      <th class=\"field3\">测量值</th>\n    </tr>\n  </thead>\n  <tbody>\n    {record-头颅侧位片}\n  </tbody>\n</table>\n<h3>意义</h3>\n<div class=\"col\">{data-意义}</div>\n\n<h1>诊断<br /><span class=\"en\">Diagnosis</span></h1>\n<div class=\"col\">{data-诊断}</div>\n\n<h1>矫治方案<br /><span class=\"en\">Treatment program</span></h1>\n<div class=\"col\">{data-矫治方案}</div>\n<h2>矫治步骤</h2>\n<ol class=\"col\">{list-矫治步骤}</ol>\n\n<h1>注意事项<br /><span class=\"en\">Precautions</span></h1>\n<ol class=\"col\">{list-注意事项}</ol>";
 
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 // 参考图像
 module.exports = {
 	"面型":     "imgs/面型对比图.png",
@@ -515,7 +546,7 @@ module.exports = {
 	"覆HE":     "imgs/覆合覆盖.png",
 	"磨牙关系": "imgs/磨牙关系.png"
 };
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 // 英文名称
 module.exports ={
 	"姓名": "name",
@@ -535,7 +566,7 @@ module.exports ={
 	"Bolton指数": "bolton index",
 	"Spee曲度": "Spee curve"
 };
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var $ = require('jquery');
 
 var ViewImage = require('./lib/viewer-image');
@@ -579,7 +610,7 @@ module.exports = {
 	close: close
 };
 
-},{"./lib/viewer-image":11,"jquery":13}],11:[function(require,module,exports){
+},{"./lib/viewer-image":12,"jquery":14}],12:[function(require,module,exports){
 var $ = require('jquery');
 var jqueryMousewheel = require('jquery-mousewheel');
 
@@ -740,7 +771,7 @@ module.exports = function (img_src) {
 	// 将构建的 img 元素返回
 	return img;
 };
-},{"jquery":13,"jquery-mousewheel":12}],12:[function(require,module,exports){
+},{"jquery":14,"jquery-mousewheel":13}],13:[function(require,module,exports){
 /*!
  * jQuery Mousewheel 3.1.13
  *
@@ -963,7 +994,7 @@ module.exports = function (img_src) {
 
 }));
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v1.11.3
  * http://jquery.com/

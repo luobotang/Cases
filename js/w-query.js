@@ -52,9 +52,7 @@ function hideMessage() {
 	ele_message.hide();
 }
 function showPreview(path) {
-	ele_pre.html("");
-	ele_pre.append(w_pre.create(path));
-	ele_pre.show();
+	ele_pre.html(w_pre.create(path)).show();
 }
 function hidePreview() {
 	ele_pre.hide();

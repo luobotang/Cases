@@ -1,6 +1,7 @@
 // 根据指定路径返回包含所有图像路径的对象
 
-function generateFromPath(baseUrl) {
+function generateFromPath(path) {
+	var baseUrl = 'cases/' + path + '/';
 	return {
 		"正面-正常": baseUrl + "正面-正常.jpg",
 		"正面-正常-画线": baseUrl + "正面-正常-画线.jpg",
