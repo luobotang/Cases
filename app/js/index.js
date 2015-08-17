@@ -1,4 +1,4 @@
-/*! luobotang-cases 0.1.0 build:2015-08-17 */
+/*! luobotang-cases 0.2.0 build:2015-08-17 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var Query = require('./w-query');
 var CaseQuery = require('./m-case_query');
@@ -15,7 +15,7 @@ function queryCase(name) {
 		}
 	});
 }
-},{"./m-case_query":2,"./w-query":4}],2:[function(require,module,exports){
+},{"./m-case_query":2,"./w-query":5}],2:[function(require,module,exports){
 // 查询模块，使得能够根据用户输入信息查找指定患者的相关信息
 // 病例列表
 
@@ -106,38 +106,33 @@ module.exports = {
 	getCaseInfo: getCaseInfo,
 	getCasePaths: getCasePaths
 };
-},{"jquery":5}],3:[function(require,module,exports){
-var $ = require('jquery');
-// 页面部件：就诊患者基本信息
-
-// 页面预览部件的 HTML 结构
-var struct = "<div class='preview_img_wrapper'>" +
-	"<img src='{img}'></img></div>" +
-	"<div class='preview_info'><p>姓名：<span class='name'>{name}</span></p>" +
-	"<p>初诊日期：<span class='date'>{date}</span></p></div>";
-
-// 根据目录，提取就诊患者相关信息，用于生成 HTML
-// path like: 
-// >>  20140130-张三
-// 前面部分为就诊日期，后面部分为姓名
-function renderHTML(path) {
-	var parts = path.split("-");
-	return struct.replace( // 头像
-		"{img}", "cases/" + path + "/正面-微笑.jpg"
-		).replace( // 名称
-		"{name}", parts[1]
-		).replace( // 日期
-		"{date}", parts[0]);
-}
-
+},{"jquery":6}],3:[function(require,module,exports){
 module.exports = {
-	create: function (path) {
-		return $("<div>", {
-			"class": "case_preview fix-float"
-		}).html(renderHTML(path));
+	formatDate: function (date) {
+		return (
+			date.substr(0, 4) + '年' +
+			date.substr(4, 2) + '月' +
+			date.substr(6, 2) + '日'
+		);
 	}
+}
+},{}],4:[function(require,module,exports){
+var $, DateUtils;
+
+$ = require('jquery');
+
+DateUtils = require('./utils/DateUtils');
+
+exports.create = function(path) {
+  var date, i, name;
+  i = path.indexOf("-");
+  date = DateUtils.formatDate(path.slice(0, i));
+  name = path.slice(i + 1);
+  return "<div class=\"case_preview fix-float\">\n	<div class=\"preview_img_wrapper\">\n		<a href=\"case.htm?p=" + path + "\" target=\"_blank\">\n			<img src=\"cases/" + path + "/正面-微笑.jpg\">\n		</a>\n	</div>\n	<div class=\"preview_info\">\n		<p>姓名：<span class=\"name\">" + name + "</span></p>\n		<p>初诊日期：<span class=\"date\">" + date + "</span></p>\n	</div>\n</div>";
 };
-},{"jquery":5}],4:[function(require,module,exports){
+
+
+},{"./utils/DateUtils":3,"jquery":6}],5:[function(require,module,exports){
 var $ = require('jquery');
 
 var w_pre = require('./w-preview');
@@ -248,7 +243,7 @@ module.exports = {
 	showMessage: showMessage
 };
 
-},{"./w-preview":3,"jquery":5}],5:[function(require,module,exports){
+},{"./w-preview":4,"jquery":6}],6:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v1.11.3
  * http://jquery.com/
