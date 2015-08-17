@@ -2,7 +2,7 @@
 
 var $ = require('jquery');
 
-var ImageViewer = require('./components/image-viewer');
+var ImageViewer = require('image-viewer');
 var PageRender = require('./m-page_render');
 var CaseImgs = require('./v-case_imgs');
 var Catalog = require('./components/catalog');

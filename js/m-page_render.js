@@ -5,7 +5,7 @@ var $ = require('jquery');
 var CasePage = require('./v-case_page');
 var EnTerms = require('./v-english_terms');
 var CompImgs = require('./v-comp_imgs');
-var ImageViewer = require('./components/image-viewer');
+var ImageViewer = require('image-viewer');
 
 // 设置图片查看器的全局引用
 window.ImageViewer = window.ImageViewer || ImageViewer;
