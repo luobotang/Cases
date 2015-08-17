@@ -23,24 +23,23 @@
 	.query {
 		border: 1px solid @query-theme-color;
 		position: relative;
+
 		.query_condition {
-			font: inherit;
-			margin-right: 100px;
-			width: 500px;
+			display: block; box-sizing: border-box; width: 100%;
+			padding: 0 60px 0 10px;
 			height: @query-h;
 			line-height: @query-h;
-			padding: 0 10px;
-			border: none;
+			font: inherit; border: none;
 			color: @query-theme-color;
 		}
+
 		.query_go {
-			color: @query-theme-color;
-			position: absolute;
-			right: 0px;
+			position: absolute; top: 0; right: 0px;
 			font: inherit;
 			height: @query-h;
 			line-height: @query-h;
 			width: 50px;
+			color: @query-theme-color;
 			text-align: center;
 			border-left: 1px solid #eee;
 			background: url(../icons/query.png) no-repeat 50% 50%;
