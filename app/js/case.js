@@ -1,3 +1,4 @@
+/*! luobotang-cases 0.1.0 2015-08-17 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // 根据传入页面的查询字符串显示对应的患者初诊页面
 
@@ -35,7 +36,7 @@ CaseQuery.getCaseInfo(p, function (data, path) {
 	$("#content").html("抱歉，没有查找到相关信息");
 });
 
-},{"./m-case_query":2,"./m-page_render":4,"./v-case_imgs":6,"./w-catalog":10,"./w-image_viewer":11,"jquery":12}],2:[function(require,module,exports){
+},{"./m-case_query":2,"./m-page_render":3,"./v-case_imgs":5,"./w-catalog":9,"./w-image_viewer":10,"jquery":12}],2:[function(require,module,exports){
 // 查询模块，使得能够根据用户输入信息查找指定患者的相关信息
 // 病例列表
 
@@ -127,215 +128,6 @@ module.exports = {
 	getCasePaths: getCasePaths
 };
 },{"jquery":12}],3:[function(require,module,exports){
-/*! Copyright (c) 2013 Brandon Aaron (http://brandon.aaron.sh)
- * Licensed under the MIT License (LICENSE.txt).
- *
- * Version: 3.1.11
- *
- * Requires: jQuery 1.2.2+
- */
-
-// luobo: 在已有库上修改，使用 RequireJS 定义模块
-var $ = require('jquery');
-var toFix  = ['wheel', 'mousewheel', 'DOMMouseScroll', 'MozMousePixelScroll'],
-    toBind = ( 'onwheel' in document || document.documentMode >= 9 ) ?
-                ['wheel'] : ['mousewheel', 'DomMouseScroll', 'MozMousePixelScroll'],
-    slice  = Array.prototype.slice,
-    nullLowestDeltaTimeout, lowestDelta;
-
-if ( $.event.fixHooks ) {
-    for ( var i = toFix.length; i; ) {
-        $.event.fixHooks[ toFix[--i] ] = $.event.mouseHooks;
-    }
-}
-
-var special = $.event.special.mousewheel = {
-    version: '3.1.11',
-
-    setup: function() {
-        if ( this.addEventListener ) {
-            for ( var i = toBind.length; i; ) {
-                this.addEventListener( toBind[--i], handler, false );
-            }
-        } else {
-            this.onmousewheel = handler;
-        }
-        // Store the line height and page height for this particular element
-        $.data(this, 'mousewheel-line-height', special.getLineHeight(this));
-        $.data(this, 'mousewheel-page-height', special.getPageHeight(this));
-    },
-
-    teardown: function() {
-        if ( this.removeEventListener ) {
-            for ( var i = toBind.length; i; ) {
-                this.removeEventListener( toBind[--i], handler, false );
-            }
-        } else {
-            this.onmousewheel = null;
-        }
-        // Clean up the data we added to the element
-        $.removeData(this, 'mousewheel-line-height');
-        $.removeData(this, 'mousewheel-page-height');
-    },
-
-    getLineHeight: function(elem) {
-        var $parent = $(elem)['offsetParent' in $.fn ? 'offsetParent' : 'parent']();
-        if (!$parent.length) {
-            $parent = $('body');
-        }
-        return parseInt($parent.css('fontSize'), 10);
-    },
-
-    getPageHeight: function(elem) {
-        return $(elem).height();
-    },
-
-    settings: {
-        adjustOldDeltas: true, // see shouldAdjustOldDeltas() below
-        normalizeOffset: true  // calls getBoundingClientRect for each event
-    }
-};
-
-$.fn.extend({
-    mousewheel: function(fn) {
-        return fn ? this.bind('mousewheel', fn) : this.trigger('mousewheel');
-    },
-
-    unmousewheel: function(fn) {
-        return this.unbind('mousewheel', fn);
-    }
-});
-
-
-function handler(event) {
-    var orgEvent   = event || window.event,
-        args       = slice.call(arguments, 1),
-        delta      = 0,
-        deltaX     = 0,
-        deltaY     = 0,
-        absDelta   = 0,
-        offsetX    = 0,
-        offsetY    = 0;
-    event = $.event.fix(orgEvent);
-    event.type = 'mousewheel';
-
-    // Old school scrollwheel delta
-    if ( 'detail'      in orgEvent ) { deltaY = orgEvent.detail * -1;      }
-    if ( 'wheelDelta'  in orgEvent ) { deltaY = orgEvent.wheelDelta;       }
-    if ( 'wheelDeltaY' in orgEvent ) { deltaY = orgEvent.wheelDeltaY;      }
-    if ( 'wheelDeltaX' in orgEvent ) { deltaX = orgEvent.wheelDeltaX * -1; }
-
-    // Firefox < 17 horizontal scrolling related to DOMMouseScroll event
-    if ( 'axis' in orgEvent && orgEvent.axis === orgEvent.HORIZONTAL_AXIS ) {
-        deltaX = deltaY * -1;
-        deltaY = 0;
-    }
-
-    // Set delta to be deltaY or deltaX if deltaY is 0 for backwards compatabilitiy
-    delta = deltaY === 0 ? deltaX : deltaY;
-
-    // New school wheel delta (wheel event)
-    if ( 'deltaY' in orgEvent ) {
-        deltaY = orgEvent.deltaY * -1;
-        delta  = deltaY;
-    }
-    if ( 'deltaX' in orgEvent ) {
-        deltaX = orgEvent.deltaX;
-        if ( deltaY === 0 ) { delta  = deltaX * -1; }
-    }
-
-    // No change actually happened, no reason to go any further
-    if ( deltaY === 0 && deltaX === 0 ) { return; }
-
-    // Need to convert lines and pages to pixels if we aren't already in pixels
-    // There are three delta modes:
-    //   * deltaMode 0 is by pixels, nothing to do
-    //   * deltaMode 1 is by lines
-    //   * deltaMode 2 is by pages
-    if ( orgEvent.deltaMode === 1 ) {
-        var lineHeight = $.data(this, 'mousewheel-line-height');
-        delta  *= lineHeight;
-        deltaY *= lineHeight;
-        deltaX *= lineHeight;
-    } else if ( orgEvent.deltaMode === 2 ) {
-        var pageHeight = $.data(this, 'mousewheel-page-height');
-        delta  *= pageHeight;
-        deltaY *= pageHeight;
-        deltaX *= pageHeight;
-    }
-
-    // Store lowest absolute delta to normalize the delta values
-    absDelta = Math.max( Math.abs(deltaY), Math.abs(deltaX) );
-
-    if ( !lowestDelta || absDelta < lowestDelta ) {
-        lowestDelta = absDelta;
-
-        // Adjust older deltas if necessary
-        if ( shouldAdjustOldDeltas(orgEvent, absDelta) ) {
-            lowestDelta /= 40;
-        }
-    }
-
-    // Adjust older deltas if necessary
-    if ( shouldAdjustOldDeltas(orgEvent, absDelta) ) {
-        // Divide all the things by 40!
-        delta  /= 40;
-        deltaX /= 40;
-        deltaY /= 40;
-    }
-
-    // Get a whole, normalized value for the deltas
-    delta  = Math[ delta  >= 1 ? 'floor' : 'ceil' ](delta  / lowestDelta);
-    deltaX = Math[ deltaX >= 1 ? 'floor' : 'ceil' ](deltaX / lowestDelta);
-    deltaY = Math[ deltaY >= 1 ? 'floor' : 'ceil' ](deltaY / lowestDelta);
-
-    // Normalise offsetX and offsetY properties
-    if ( special.settings.normalizeOffset && this.getBoundingClientRect ) {
-        var boundingRect = this.getBoundingClientRect();
-        offsetX = event.clientX - boundingRect.left;
-        offsetY = event.clientY - boundingRect.top;
-    }
-
-    // Add information to the event object
-    event.deltaX = deltaX;
-    event.deltaY = deltaY;
-    event.deltaFactor = lowestDelta;
-    event.offsetX = offsetX;
-    event.offsetY = offsetY;
-    // Go ahead and set deltaMode to 0 since we converted to pixels
-    // Although this is a little odd since we overwrite the deltaX/Y
-    // properties with normalized deltas.
-    event.deltaMode = 0;
-
-    // Add event and delta to the front of the arguments
-    args.unshift(event, delta, deltaX, deltaY);
-
-    // Clearout lowestDelta after sometime to better
-    // handle multiple device types that give different
-    // a different lowestDelta
-    // Ex: trackpad = 3 and mouse wheel = 120
-    if (nullLowestDeltaTimeout) { clearTimeout(nullLowestDeltaTimeout); }
-    nullLowestDeltaTimeout = setTimeout(nullLowestDelta, 200);
-
-    return ($.event.dispatch || $.event.handle).apply(this, args);
-}
-
-function nullLowestDelta() {
-    lowestDelta = null;
-}
-
-function shouldAdjustOldDeltas(orgEvent, absDelta) {
-    // If this is an older event and the delta is divisable by 120,
-    // then we are assuming that the browser is treating this as an
-    // older mouse wheel event and that we should divide the deltas
-    // by 40 to try and get a more usable deltaFactor.
-    // Side note, this actually impacts the reported scroll distance
-    // in older browsers and can cause scrolling to be slower than native.
-    // Turn this off by setting $.event.special.mousewheel.settings.adjustOldDeltas to false.
-    return special.settings.adjustOldDeltas && orgEvent.type === 'mousewheel' && absDelta % 120 === 0;
-}
-
-},{"jquery":12}],4:[function(require,module,exports){
 // 根据输入的患者数据，生成渲染页面
 
 var $ = require('jquery');
@@ -494,8 +286,11 @@ function renderPage(caseObj, caseImgs) {
 module.exports = {
 	render: renderPage
 };
-},{"./v-case_page":7,"./v-comp_imgs":8,"./v-english_terms":9,"./w-image_viewer":11,"jquery":12}],5:[function(require,module,exports){
-require('./m-mousewheel');
+},{"./v-case_page":6,"./v-comp_imgs":7,"./v-english_terms":8,"./w-image_viewer":10,"jquery":12}],4:[function(require,module,exports){
+var $ = require('jquery');
+var jqueryMousewheel = require('jquery-mousewheel');
+
+jqueryMousewheel($);
 
 // 依赖 mousewheel 插件提供的 jQuery 的鼠标滚轮事件
 module.exports = function (img_src) {
@@ -639,7 +434,7 @@ module.exports = function (img_src) {
 	// 将构建的 img 元素返回
 	return img;
 };
-},{"./m-mousewheel":3}],6:[function(require,module,exports){
+},{"jquery":12,"jquery-mousewheel":11}],5:[function(require,module,exports){
 // 根据指定路径返回包含所有图像路径的对象
 
 function generateFromPath(baseUrl) {
@@ -667,11 +462,11 @@ module.exports = {
 	from: generateFromPath
 };
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 module.exports = "<h1>基本信息<br /><span class=\"en\">Basic Information</span></h1>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-正面-微笑}</div>\n	</div>\n	<div class=\"col-r\">{data-基本信息}</div>\n</div>\n\n<h1>病史回顾<br /><span class=\"en\">Medical History</span></h1>\n<div class=\"col\">{data-病史回顾}</div>\n\n<h1>颜面检查<br /><span class=\"en\">Evaluation of facial morphometrics</span></h1>\n<h2>正面观<br /><span class=\"en\">Frontal examination</span></h2>\n<div class=\"col\">\n	<div class=\"img\">\n	    {img-正面-正常}\n	    <a class=\"img_link\" onclick=\"{url-正面-正常-画线}\">三等分线</a>\n	</div>\n	<div class=\"img\">\n	    {img-正面-微笑}\n	    <a class=\"img_link\" onclick=\"{url-正面-微笑-画线}\">中分线</a>\n	</div>\n</div>\n<div class=\"col\">{data-正面观}</div>\n<h2>侧面观<br /><span class=\"en\">lateral examination</span></h2>\n<div class=\"col\">\n	<div class=\"img\">{img-侧面-45度}</div>\n	<div class=\"img\">\n	    {img-侧面-90度}\n	    <a class=\"img_link\" onclick=\"{url-侧面-90度-画线}\">面型线</a>\n	    <a class=\"img_link\" onclick=\"{url-侧面-90度-画线1}\">唇部位置线</a>\n	</div>\n</div>\n<div class=\"col\">{data-侧面观}</div>\n\n<h1>颞下颌关节检查<br /><span class=\"en\">temporomandibular joint</span></h1>\n<div class=\"col\">{data-颞下颌关节检查}</div>\n\n<h1>牙合检查<br /><span class=\"en\">occlusion examination</span></h1>\n<h2>牙列<br /><span class=\"en\">permanent dentition</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-全牙列}</div>\n	</div>\n	<div class=\"col-r\">{data-全牙列}</div>\n</div>\n<h2>覆HE覆盖<br /><span class=\"en\">overbite & overjet</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-覆HE覆盖}</div>\n	</div>\n	<div class=\"col-r\">{data-覆HE覆盖}</div>\n</div>\n<h2>咬合关系<br /><span class=\"en\">moral relationship</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-左侧咬合}</div>\n	</div>\n	<div class=\"col-r\">{data-左侧咬合关系}</div>\n</div>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-右侧咬合}</div>\n	</div>\n	<div class=\"col-r\">{data-右侧咬合关系}</div>\n</div>\n<h2>牙弓形态分析<br /><span class=\"en\">symmetry of dental arch</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img rotate\">{img-上牙弓}</div>\n		<div class=\"img rotate\">{img-下牙弓}</div>\n	</div>\n	<div class=\"col-r\">{data-牙弓形态分析}</div>\n</div>\n\n<h1>模型分析<br /><span class=\"en\">dental cast analysis</span></h1>\n<div class=\"col\">{data-模型分析}</div>\n\n<h1>影像学检查</h1>\n<h2>全口曲面断层片<br /><span class=\"en\">full mouth panoramic radiographs</span></h2>\n<div class=\"col\"><div class=\"img\">{img-全口曲面断层片}</div></div>\n<div class=\"col\">{data-全口曲面断层片}</div>\n<h2>头颅侧位片<br /><span class=\"en\">cephalometrics</span></h2>\n<div class=\"col\"><div class=\"img\">{img-头颅侧位片}</div></div>\n<table class=\"result\">\n  <thead>\n    <tr>\n      <th class=\"field1\">测量项目</th>\n      <th class=\"field2\">正常值</th>\n      <th class=\"field3\">测量值</th>\n    </tr>\n  </thead>\n  <tbody>\n    {record-头颅侧位片}\n  </tbody>\n</table>\n<h3>意义</h3>\n<div class=\"col\">{data-意义}</div>\n\n<h1>诊断<br /><span class=\"en\">Diagnosis</span></h1>\n<div class=\"col\">{data-诊断}</div>\n\n<h1>矫治方案<br /><span class=\"en\">Treatment program</span></h1>\n<div class=\"col\">{data-矫治方案}</div>\n<h2>矫治步骤</h2>\n<ol class=\"col\">{list-矫治步骤}</ol>\n\n<h1>注意事项<br /><span class=\"en\">Precautions</span></h1>\n<ol class=\"col\">{list-注意事项}</ol>";
 
 
-},{}],8:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 // 参考图像
 module.exports = {
 	"面型":     "imgs/面型对比图.png",
@@ -680,7 +475,7 @@ module.exports = {
 	"覆HE":     "imgs/覆合覆盖.png",
 	"磨牙关系": "imgs/磨牙关系.png"
 };
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 // 英文名称
 module.exports ={
 	"姓名": "name",
@@ -700,7 +495,7 @@ module.exports ={
 	"Bolton指数": "bolton index",
 	"Spee曲度": "Spee curve"
 };
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 // params will change the default setting of Catalog
 
 var $ = require('jquery');
@@ -845,7 +640,7 @@ module.exports = {
 	create: create
 };
 
-},{"jquery":12}],11:[function(require,module,exports){
+},{"jquery":12}],10:[function(require,module,exports){
 var $ = require('jquery');
 
 var ViewImage = require('./m-view_image');
@@ -886,7 +681,230 @@ module.exports = {
 	show: show
 };
 
-},{"./m-view_image":5,"jquery":12}],12:[function(require,module,exports){
+},{"./m-view_image":4,"jquery":12}],11:[function(require,module,exports){
+/*!
+ * jQuery Mousewheel 3.1.13
+ *
+ * Copyright jQuery Foundation and other contributors
+ * Released under the MIT license
+ * http://jquery.org/license
+ */
+
+(function (factory) {
+    if ( typeof define === 'function' && define.amd ) {
+        // AMD. Register as an anonymous module.
+        define(['jquery'], factory);
+    } else if (typeof exports === 'object') {
+        // Node/CommonJS style for Browserify
+        module.exports = factory;
+    } else {
+        // Browser globals
+        factory(jQuery);
+    }
+}(function ($) {
+
+    var toFix  = ['wheel', 'mousewheel', 'DOMMouseScroll', 'MozMousePixelScroll'],
+        toBind = ( 'onwheel' in document || document.documentMode >= 9 ) ?
+                    ['wheel'] : ['mousewheel', 'DomMouseScroll', 'MozMousePixelScroll'],
+        slice  = Array.prototype.slice,
+        nullLowestDeltaTimeout, lowestDelta;
+
+    if ( $.event.fixHooks ) {
+        for ( var i = toFix.length; i; ) {
+            $.event.fixHooks[ toFix[--i] ] = $.event.mouseHooks;
+        }
+    }
+
+    var special = $.event.special.mousewheel = {
+        version: '3.1.12',
+
+        setup: function() {
+            if ( this.addEventListener ) {
+                for ( var i = toBind.length; i; ) {
+                    this.addEventListener( toBind[--i], handler, false );
+                }
+            } else {
+                this.onmousewheel = handler;
+            }
+            // Store the line height and page height for this particular element
+            $.data(this, 'mousewheel-line-height', special.getLineHeight(this));
+            $.data(this, 'mousewheel-page-height', special.getPageHeight(this));
+        },
+
+        teardown: function() {
+            if ( this.removeEventListener ) {
+                for ( var i = toBind.length; i; ) {
+                    this.removeEventListener( toBind[--i], handler, false );
+                }
+            } else {
+                this.onmousewheel = null;
+            }
+            // Clean up the data we added to the element
+            $.removeData(this, 'mousewheel-line-height');
+            $.removeData(this, 'mousewheel-page-height');
+        },
+
+        getLineHeight: function(elem) {
+            var $elem = $(elem),
+                $parent = $elem['offsetParent' in $.fn ? 'offsetParent' : 'parent']();
+            if (!$parent.length) {
+                $parent = $('body');
+            }
+            return parseInt($parent.css('fontSize'), 10) || parseInt($elem.css('fontSize'), 10) || 16;
+        },
+
+        getPageHeight: function(elem) {
+            return $(elem).height();
+        },
+
+        settings: {
+            adjustOldDeltas: true, // see shouldAdjustOldDeltas() below
+            normalizeOffset: true  // calls getBoundingClientRect for each event
+        }
+    };
+
+    $.fn.extend({
+        mousewheel: function(fn) {
+            return fn ? this.bind('mousewheel', fn) : this.trigger('mousewheel');
+        },
+
+        unmousewheel: function(fn) {
+            return this.unbind('mousewheel', fn);
+        }
+    });
+
+
+    function handler(event) {
+        var orgEvent   = event || window.event,
+            args       = slice.call(arguments, 1),
+            delta      = 0,
+            deltaX     = 0,
+            deltaY     = 0,
+            absDelta   = 0,
+            offsetX    = 0,
+            offsetY    = 0;
+        event = $.event.fix(orgEvent);
+        event.type = 'mousewheel';
+
+        // Old school scrollwheel delta
+        if ( 'detail'      in orgEvent ) { deltaY = orgEvent.detail * -1;      }
+        if ( 'wheelDelta'  in orgEvent ) { deltaY = orgEvent.wheelDelta;       }
+        if ( 'wheelDeltaY' in orgEvent ) { deltaY = orgEvent.wheelDeltaY;      }
+        if ( 'wheelDeltaX' in orgEvent ) { deltaX = orgEvent.wheelDeltaX * -1; }
+
+        // Firefox < 17 horizontal scrolling related to DOMMouseScroll event
+        if ( 'axis' in orgEvent && orgEvent.axis === orgEvent.HORIZONTAL_AXIS ) {
+            deltaX = deltaY * -1;
+            deltaY = 0;
+        }
+
+        // Set delta to be deltaY or deltaX if deltaY is 0 for backwards compatabilitiy
+        delta = deltaY === 0 ? deltaX : deltaY;
+
+        // New school wheel delta (wheel event)
+        if ( 'deltaY' in orgEvent ) {
+            deltaY = orgEvent.deltaY * -1;
+            delta  = deltaY;
+        }
+        if ( 'deltaX' in orgEvent ) {
+            deltaX = orgEvent.deltaX;
+            if ( deltaY === 0 ) { delta  = deltaX * -1; }
+        }
+
+        // No change actually happened, no reason to go any further
+        if ( deltaY === 0 && deltaX === 0 ) { return; }
+
+        // Need to convert lines and pages to pixels if we aren't already in pixels
+        // There are three delta modes:
+        //   * deltaMode 0 is by pixels, nothing to do
+        //   * deltaMode 1 is by lines
+        //   * deltaMode 2 is by pages
+        if ( orgEvent.deltaMode === 1 ) {
+            var lineHeight = $.data(this, 'mousewheel-line-height');
+            delta  *= lineHeight;
+            deltaY *= lineHeight;
+            deltaX *= lineHeight;
+        } else if ( orgEvent.deltaMode === 2 ) {
+            var pageHeight = $.data(this, 'mousewheel-page-height');
+            delta  *= pageHeight;
+            deltaY *= pageHeight;
+            deltaX *= pageHeight;
+        }
+
+        // Store lowest absolute delta to normalize the delta values
+        absDelta = Math.max( Math.abs(deltaY), Math.abs(deltaX) );
+
+        if ( !lowestDelta || absDelta < lowestDelta ) {
+            lowestDelta = absDelta;
+
+            // Adjust older deltas if necessary
+            if ( shouldAdjustOldDeltas(orgEvent, absDelta) ) {
+                lowestDelta /= 40;
+            }
+        }
+
+        // Adjust older deltas if necessary
+        if ( shouldAdjustOldDeltas(orgEvent, absDelta) ) {
+            // Divide all the things by 40!
+            delta  /= 40;
+            deltaX /= 40;
+            deltaY /= 40;
+        }
+
+        // Get a whole, normalized value for the deltas
+        delta  = Math[ delta  >= 1 ? 'floor' : 'ceil' ](delta  / lowestDelta);
+        deltaX = Math[ deltaX >= 1 ? 'floor' : 'ceil' ](deltaX / lowestDelta);
+        deltaY = Math[ deltaY >= 1 ? 'floor' : 'ceil' ](deltaY / lowestDelta);
+
+        // Normalise offsetX and offsetY properties
+        if ( special.settings.normalizeOffset && this.getBoundingClientRect ) {
+            var boundingRect = this.getBoundingClientRect();
+            offsetX = event.clientX - boundingRect.left;
+            offsetY = event.clientY - boundingRect.top;
+        }
+
+        // Add information to the event object
+        event.deltaX = deltaX;
+        event.deltaY = deltaY;
+        event.deltaFactor = lowestDelta;
+        event.offsetX = offsetX;
+        event.offsetY = offsetY;
+        // Go ahead and set deltaMode to 0 since we converted to pixels
+        // Although this is a little odd since we overwrite the deltaX/Y
+        // properties with normalized deltas.
+        event.deltaMode = 0;
+
+        // Add event and delta to the front of the arguments
+        args.unshift(event, delta, deltaX, deltaY);
+
+        // Clearout lowestDelta after sometime to better
+        // handle multiple device types that give different
+        // a different lowestDelta
+        // Ex: trackpad = 3 and mouse wheel = 120
+        if (nullLowestDeltaTimeout) { clearTimeout(nullLowestDeltaTimeout); }
+        nullLowestDeltaTimeout = setTimeout(nullLowestDelta, 200);
+
+        return ($.event.dispatch || $.event.handle).apply(this, args);
+    }
+
+    function nullLowestDelta() {
+        lowestDelta = null;
+    }
+
+    function shouldAdjustOldDeltas(orgEvent, absDelta) {
+        // If this is an older event and the delta is divisable by 120,
+        // then we are assuming that the browser is treating this as an
+        // older mouse wheel event and that we should divide the deltas
+        // by 40 to try and get a more usable deltaFactor.
+        // Side note, this actually impacts the reported scroll distance
+        // in older browsers and can cause scrolling to be slower than native.
+        // Turn this off by setting $.event.special.mousewheel.settings.adjustOldDeltas to false.
+        return special.settings.adjustOldDeltas && orgEvent.type === 'mousewheel' && absDelta % 120 === 0;
+    }
+
+}));
+
+},{}],12:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v1.11.3
  * http://jquery.com/

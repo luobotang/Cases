@@ -1,4 +1,7 @@
-require('./m-mousewheel');
+var $ = require('jquery');
+var jqueryMousewheel = require('jquery-mousewheel');
+
+jqueryMousewheel($);
 
 // 依赖 mousewheel 插件提供的 jQuery 的鼠标滚轮事件
 module.exports = function (img_src) {

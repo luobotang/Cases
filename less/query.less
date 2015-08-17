@@ -1,13 +1,24 @@
+@charset "UTF-8";
+
+@import "npm://xsm-less-utils";
+
 @query-h: 40px;
 @query-theme-color: #4BA9E6;
+
+#xsm.keyframes(
+	query-bg-move,
+	{background-position: 0 0},
+	{background-position: -700px 0}
+);
+
 .case_query {
 	position: relative;
 	margin: 1em 0;
 	min-height: 450px;
 	.query_imgbg {
 		height: 250px;
-		background: url("../imgs/cloud.jpg") no-repeat 50% 50%;
-		background-size: 100% 100%;
+		background: url("../imgs/cloud.jpg") repeat 0 0;
+		#xsm.animation(query-bg-move 100s linear infinite);
 	}
 	.query {
 		border: 1px solid @query-theme-color;

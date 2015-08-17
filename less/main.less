@@ -1,7 +1,7 @@
 @charset "UTF-8";
 
-// 主题颜色-蓝色
-@theme-color: rgb(75, 169, 230);
+@import "vars";
+@import "npm://xsm-less-utils";
 
 // 高宽
 @head-height: 96px;
@@ -12,21 +12,17 @@
 	filter: ~"alpha(opacity=@{opacityPercentage})";
 }
 
-// 基本标签格式
 * {
-	margin: 0;
-	padding: 0;
+	margin: 0; padding: 0;
 }
 body {
-	font-family: "Microsoft YaHei";
-	font-size: 16px;
+	font: 16px/1.7 @fontMain;
 	color: #333;
-	width: 100%;
+	background: #f8f8f8;
 }
 h1, h2, h3, h4, h5, h6 {
-	font-weight: bold;
 	text-align: left;
-	font-family: Arial, SimSun;
+	font: bold 24px/1 @fontTitle;
 	text-shadow: 1px 1px #fff, 2px 3px #ddd;
 	line-height: 1em;
 	margin-bottom: 1em;
@@ -36,21 +32,13 @@ h1 {
 	padding-bottom: 8px;
 	border-bottom: 1px dashed #999;
 }
-h2, h3, h4 {
-	font-size: 24px;
-}
-p {
-	text-align: justify;
-	line-height: 2;
-}
 a {
-	text-decoration: none;
+	text-decoration: none; color: inherit;
 }
-li {
-	list-style: none outside none;
+ul, li {
+	list-style: none;
 }
 
-// import other less files
 @import "layout.less";
 @import "icon.less";
 
