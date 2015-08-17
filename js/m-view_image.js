@@ -1,10 +1,12 @@
 var $ = require('jquery');
 var jqueryMousewheel = require('jquery-mousewheel');
 
+// 初始化 jQuery 插件
 jqueryMousewheel($);
 
 // 依赖 mousewheel 插件提供的 jQuery 的鼠标滚轮事件
 module.exports = function (img_src) {
+
 	var img_size_origin = { width: 0, height: 0 },
 		zoom = { last: 1.0, curr: 1.0 },
 		ondrag = false,
@@ -14,6 +16,7 @@ module.exports = function (img_src) {
 		"class": "viewable_image",
 		src: img_src
 	});
+
 	img.bind({
 		load: onLoad,
 		mousewheel: onWheel,
