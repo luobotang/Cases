@@ -1,7 +1,7 @@
 module.exports = function (grunt) {
 
-	var banner = '/*! <%= pkg.name %> <%= pkg.version %> <%= grunt.template.today("yyyy-mm-dd") %> */';
-	// 项目配置
+	var banner = '/*! <%= pkg.name %> <%= pkg.version %> build:<%= grunt.template.today("yyyy-mm-dd") %> */';
+
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
 		less: {
@@ -27,7 +27,7 @@ module.exports = function (grunt) {
 				src: 'js/index.main.js',
 				dest: 'app/js/index.js'
 			},
-			P_case: {
+			p_case: {
 				src: 'js/case.main.js',
 				dest: 'app/js/case.js'
 			}
@@ -37,4 +37,5 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-less');
 	grunt.loadNpmTasks('grunt-browserify');
 
+	grunt.registerTask('default', ['less', 'browserify']);
 };

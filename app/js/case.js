@@ -1,13 +1,13 @@
-/*! luobotang-cases 0.1.0 2015-08-17 */
+/*! luobotang-cases 0.1.0 build:2015-08-17 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // 根据传入页面的查询字符串显示对应的患者初诊页面
 
 var $ = require('jquery');
 
-var ImageViewer = require('./w-image_viewer');
+var ImageViewer = require('./components/image-viewer');
 var PageRender = require('./m-page_render');
 var CaseImgs = require('./v-case_imgs');
-var Catalog = require('./w-catalog');
+var Catalog = require('./components/catalog');
 var CaseQuery = require('./m-case_query');
 
 function initImgs() {
@@ -36,7 +36,379 @@ CaseQuery.getCaseInfo(p, function (data, path) {
 	$("#content").html("抱歉，没有查找到相关信息");
 });
 
-},{"./m-case_query":2,"./m-page_render":3,"./v-case_imgs":5,"./w-catalog":9,"./w-image_viewer":10,"jquery":12}],2:[function(require,module,exports){
+},{"./components/catalog":2,"./components/image-viewer":3,"./m-case_query":5,"./m-page_render":6,"./v-case_imgs":8,"jquery":13}],2:[function(require,module,exports){
+// params will change the default setting of Catalog
+
+var $ = require('jquery');
+
+var LazyInvoke = require('../utils/lazy-invoke');
+
+var items, activeItemIndex = -1,
+	// 目录结构部件
+	catalog, catalog_head, catalog_body, catalog_foot;
+
+var FIX_TOP_HEIGHT = 86; //px
+
+function toggleBodyDisplay () {
+	catalog_body.toggle();
+};
+
+// 搜索所有的标题（h1-h6），生成对应的链接项添加到目录中
+function searchAndInsertTocItems() {
+	// 记录当前处理的各级标题编号
+	var sectNums = [0, 0, 0, 0, 0, 0];
+
+	function clearLowLevelSects(level) {
+		for (var i = level; i < 6; i++) {
+			sectNums[i] = 0;
+		}
+	}
+
+	function getSectNum(level) {
+		return sectNums.slice(0, level).join(".");
+	}
+
+	var headings = document.querySelectorAll("h1,h2,h3,h4,h5,h6");
+
+	// 构建数组后进行排序、处理
+	[].slice.call(headings, 0)
+		.sort(function (a, b) {
+			// 根据距文档顶部距离进行排序
+			return a.offsetTop - b.offsetTop;
+		})
+		.forEach(function (head, index, heads) {
+			// 依次处理每个标题元素
+			var level = parseInt(head.tagName.charAt(1));
+			sectNums[level - 1]++;
+			clearLowLevelSects(level);
+			var sectNum = getSectNum(level);
+
+			// 作为目录项链接原标题的 <a>
+			var headHtml = head.innerHTML.match(/^[^<]*/)[0];
+			var link = $("<a>", {
+				href: "#TOC" + sectNum,
+				title: headHtml
+			}).text(headHtml);
+
+			// 标题链接
+			// 插入标题内作为第一个节点
+			var anchor = document.createElement("a");
+			anchor.className = 'toc-anchor';
+			anchor.id = "TOC" + sectNum;
+			head.insertBefore(anchor, head.firstChild);
+
+			// 包裹目录项的 <div>，便于设置样式
+			var entry = $("<div>", {
+				"class": "item level" + level
+			});
+			entry.append(link);
+			catalog_body.append(entry);
+			
+			// 记录目录项信息到数组，用于页面滚动时查找、激活
+			items.push({
+				element: entry,
+				linkObj: anchor
+			});
+		});
+};
+
+// 遍历目录项，返回当前活动目录项的索引位置
+// 未找到返回 -1
+function getActiveItemIndex(scrollTop) {
+	var max = items.length - 1, min = 0;
+	// 尽量减小查找范围
+	if (activeItemIndex !== -1) {
+		var curr = items[activeItemIndex].linkObj.offsetTop;
+		if (curr > scrollTop) {
+			max = activeItemIndex;
+		} else {
+			min = activeItemIndex;
+		}
+	}
+	// 从后向前查找，返回第一个满足条件的位置
+	for (var i = max; i >= min; --i) {
+		if (items[i].linkObj.offsetTop <= scrollTop) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+function onScroll(e) {
+	// 确保目录已初始化
+	if (items && items.length) {
+		var scrollTop = $(document).scrollTop();
+
+		if (scrollTop > FIX_TOP_HEIGHT) { 
+			catalog.addClass("fixed");
+		} else {
+			catalog.removeClass("fixed");
+		}
+
+		// 还未滚动到目录第一项的范围
+		if (activeItemIndex === -1 && items[0].linkObj.offsetTop > scrollTop) {
+			return;
+		} else if (activeItemIndex !== -1) {
+			items[activeItemIndex].element.removeClass("active");
+		}
+
+		// 激活当前目录项
+		activeItemIndex = getActiveItemIndex(scrollTop);
+		if (activeItemIndex !== -1) {
+			items[activeItemIndex].element.addClass("active");
+		}
+	}
+}
+
+function create() {
+	// 如已有 catalog 部件，先移除
+	var tmp = $('#catalog');
+	if (tmp) { tmp.remove(); }
+
+	init();
+
+	catalog = $("<div>", {
+		id: 'catalog'
+	});
+	catalog_head = $("<div>", {
+		"class": 'catalog_head',
+		click: toggleBodyDisplay
+	});
+	catalog_body = $("<div>", {
+		"class": 'catalog_body'
+	});
+	catalog_foot = $("<div>", {
+		"class": 'catalog_foot'
+	});
+	var btn_close = $("<div>", {
+		"class": "catalog_close",
+		click: function () { catalog.hide(); }
+	}).html("×");
+	catalog.append(catalog_head, catalog_body, catalog_foot, btn_close);
+
+	items = [];
+	searchAndInsertTocItems();
+	$(document.body).append(catalog);
+}
+
+var __inited = false;
+
+function init() {
+	if (!__inited) {
+		$(window).on('scroll', LazyInvoke(onScroll, 100));
+		__inited = true;
+	}
+}
+
+module.exports = {
+	create: create
+};
+
+},{"../utils/lazy-invoke":7,"jquery":13}],3:[function(require,module,exports){
+var $ = require('jquery');
+
+var ViewImage = require('./viewer-image');
+
+var KEY_ESC = 27;
+
+// 图片全屏预览组件
+
+var box = $("<div>", {
+	"class": "image-viewer-container",
+	click: close
+});
+
+var view_img;
+
+function show(img_src) {
+	view_img = new ViewImage(img_src);
+	box.append(view_img);
+	box.show();
+	$('body').addClass('on-image-viewing');
+};
+
+function close() {
+	if (view_img) { // clear img
+		$(view_img).remove();
+		view_img = null;
+	}
+	box.hide();
+	$('body').removeClass('on-image-viewing');
+};
+
+// add handler on box no use, don't know why
+$('body').keydown(function (e) {
+	if (e.keyCode == KEY_ESC) close();
+});
+
+box.hide().appendTo(document.body);
+
+module.exports = {
+	show: show
+};
+
+},{"./viewer-image":4,"jquery":13}],4:[function(require,module,exports){
+var $ = require('jquery');
+var jqueryMousewheel = require('jquery-mousewheel');
+
+// 初始化 jQuery 插件
+jqueryMousewheel($);
+
+var cache = {};
+
+// 依赖 mousewheel 插件提供的 jQuery 的鼠标滚轮事件
+module.exports = function (img_src) {
+
+	var img_size_origin = { width: 0, height: 0 },
+		zoom = { last: 1.0, curr: 1.0 },
+		ondrag = false,
+		last_mouse_pos = { x: 0, y: 0 };
+
+	var img = $('<img>', {
+		"class": "viewable_image",
+		src: img_src
+	});
+
+	img.bind({
+		mousewheel: onWheel,
+		mousedown: onMousedown,
+		mousemove: onMousemove,
+		mouseup: onMouseup,
+		dragstart: cancelEvent,
+		click: cancelEvent
+	});
+
+	// 缓存图片路径，对于已缓存图片直接按已加载进行处理
+	if (!cache[img_src]) {
+		cache[img_src] = true;
+		img.on('load', onLoad);
+	} else {
+		setTimeout(onLoad, 0);
+	}
+
+	function setSize(width, height) {
+		//console.log("in setSize. width: " + width + ", height: " + height);
+		img.width(width).height(height);
+	}
+
+	// after changed zoom value, update img's size
+	function updateSize() {
+		setSize(
+			img_size_origin.width * zoom.curr,
+			img_size_origin.height * zoom.curr
+		);
+	}
+
+	function getSize(size) {
+		return {
+			width: img.width(),
+			height: img.height()
+		};
+	}
+
+	function getWindowSize() {
+		return {
+			width: 	window.innerWidth,
+			height: window.innerHeight
+		};
+	}
+
+	function getPos() {
+		return {
+			left: parseInt(img.css("left")),
+			top:  parseInt(img.css("top"))
+		};
+	}
+
+	function setPos(left, top) {
+		//console.log("in setPos. left: " + left + ", top: " + top);
+		img.css({ left: left + "px", top: top + "px" });
+	}
+
+	function zoomImg(curr_x, curr_y, scale) {
+		//console.log("in zoomImg. curr_x: %s, curr_y: %s", curr_x, curr_y);
+		// when scroll with mouse's middle button scale the image
+		// but fix the mouse pointer on the image
+		zoom.last = zoom.curr;
+		zoom.curr = scale;
+		var img_pos = getPos();
+		updateSize();
+		setPos(
+			curr_x - (zoom.curr / zoom.last) * (curr_x - img_pos.left),
+			curr_y - (zoom.curr / zoom.last) * (curr_y - img_pos.top)
+		);
+	}
+
+	function setPosCenter() {
+		var img_size = getSize(),
+			win_size = getWindowSize();
+		setPos(
+			(win_size.width - img_size.width) / 2,
+			(win_size.height - img_size.height) / 2
+		);
+	}
+
+	function onLoad() {
+		img.addClass('img-loaded');
+		// record the original image size
+		img_size_origin = {
+			width:  img.width(),
+			height: img.height()
+		};
+		var win_size = getWindowSize(),
+			h_ratio = win_size.height / img_size_origin.height,
+			w_ratio = win_size.width / img_size_origin.width;
+		// set zoom, make sure img not out of window
+		zoom.curr = (h_ratio < w_ratio) ?
+					(h_ratio < 1.0 ? h_ratio : 1.0) :
+					(w_ratio < 1.0 ? w_ratio : 1.0);
+		updateSize();
+		setPosCenter();
+	}
+	// require: jquery.mousewheel plugin
+	// 鼠标滚轮控制图像缩放
+	function onWheel(e, delta) {
+		zoomImg(e.clientX, e.clientY, zoom.curr * (delta < 0 ? 0.9 : 1.1));
+		e.preventDefault();
+		return false;
+	}
+	// drag image with mouse
+	function onMousedown(e) {
+		// on Firefox means left button
+		if (e.button == 0) {
+			e.preventDefault();
+			ondrag = true;
+			last_mouse_pos = { x: e.clientX, y: e.clientY };
+			img.css("cursor", "move");
+		}
+	}
+	function onMousemove(e) {
+		if (ondrag) {
+			var img_pos = getPos(),
+				cur_x = e.clientX,
+				cur_y = e.clientY;
+			setPos(
+				img_pos.left + cur_x - last_mouse_pos.x,
+				img_pos.top  + cur_y - last_mouse_pos.y
+			);
+			last_mouse_pos = { x: cur_x, y: cur_y };
+		}
+	}
+	function onMouseup(e) {
+		if (ondrag) {
+			ondrag = false;
+			img.css("cursor", "default");
+		}
+	}
+	function cancelEvent(e) {
+		e.stopPropagation();
+		return false;
+	}
+
+	// 将构建的 img 元素返回
+	return img;
+};
+},{"jquery":13,"jquery-mousewheel":12}],5:[function(require,module,exports){
 // 查询模块，使得能够根据用户输入信息查找指定患者的相关信息
 // 病例列表
 
@@ -127,7 +499,7 @@ module.exports = {
 	getCaseInfo: getCaseInfo,
 	getCasePaths: getCasePaths
 };
-},{"jquery":12}],3:[function(require,module,exports){
+},{"jquery":13}],6:[function(require,module,exports){
 // 根据输入的患者数据，生成渲染页面
 
 var $ = require('jquery');
@@ -135,7 +507,7 @@ var $ = require('jquery');
 var CasePage = require('./v-case_page');
 var EnTerms = require('./v-english_terms');
 var CompImgs = require('./v-comp_imgs');
-var ImageViewer = require('./w-image_viewer');
+var ImageViewer = require('./components/image-viewer');
 
 // 设置图片查看器的全局引用
 window.ImageViewer = window.ImageViewer || ImageViewer;
@@ -286,155 +658,27 @@ function renderPage(caseObj, caseImgs) {
 module.exports = {
 	render: renderPage
 };
-},{"./v-case_page":6,"./v-comp_imgs":7,"./v-english_terms":8,"./w-image_viewer":10,"jquery":12}],4:[function(require,module,exports){
-var $ = require('jquery');
-var jqueryMousewheel = require('jquery-mousewheel');
+},{"./components/image-viewer":3,"./v-case_page":9,"./v-comp_imgs":10,"./v-english_terms":11,"jquery":13}],7:[function(require,module,exports){
+var DEFAULT_DELAY_TIME = 50; //ms
 
-jqueryMousewheel($);
+module.exports = function (fn, delay) {
 
-// 依赖 mousewheel 插件提供的 jQuery 的鼠标滚轮事件
-module.exports = function (img_src) {
-	var img_size_origin = { width: 0, height: 0 },
-		zoom = { last: 1.0, curr: 1.0 },
-		ondrag = false,
-		last_mouse_pos = { x: 0, y: 0 };
-
-	var img = $('<img>', {
-		"class": "viewable_image",
-		src: img_src
-	});
-	img.bind({
-		load: onLoad,
-		mousewheel: onWheel,
-		mousedown: onMousedown,
-		mousemove: onMousemove,
-		mouseup: onMouseup,
-		dragstart: cancelEvent,
-		click: cancelEvent
-	});
-
-	function setSize(width, height) {
-		//console.log("in setSize. width: " + width + ", height: " + height);
-		img.width(width).height(height);
+	var timer;
+	if (typeof delay !== 'number' || delay < 0) {
+		delay = DEFAULT_DELAY_TIME;
 	}
 
-	// after changed zoom value, update img's size
-	function updateSize() {
-		setSize(
-			img_size_origin.width * zoom.curr,
-			img_size_origin.height * zoom.curr
-		);
-	}
-
-	function getSize(size) {
-		return {
-			width: img.width(),
-			height: img.height()
-		};
-	}
-
-	function getWindowSize() {
-		return {
-			width: 	window.innerWidth,
-			height: window.innerHeight
-		};
-	}
-
-	function getPos() {
-		return {
-			left: parseInt(img.css("left")),
-			top:  parseInt(img.css("top"))
-		};
-	}
-
-	function setPos(left, top) {
-		//console.log("in setPos. left: " + left + ", top: " + top);
-		img.css({ left: left + "px", top: top + "px" });
-	}
-
-	function zoomImg(curr_x, curr_y, scale) {
-		//console.log("in zoomImg. curr_x: %s, curr_y: %s", curr_x, curr_y);
-		// when scroll with mouse's middle button scale the image
-		// but fix the mouse pointer on the image
-		zoom.last = zoom.curr;
-		zoom.curr = scale;
-		var img_pos = getPos();
-		updateSize();
-		setPos(
-			curr_x - (zoom.curr / zoom.last) * (curr_x - img_pos.left),
-			curr_y - (zoom.curr / zoom.last) * (curr_y - img_pos.top)
-		);
-	}
-
-	function setPosCenter() {
-		var img_size = getSize(),
-			win_size = getWindowSize();
-		setPos(
-			(win_size.width - img_size.width) / 2,
-			(win_size.height - img_size.height) / 2
-		);
-	}
-
-	function onLoad() {
-		// record the original image size
-		img_size_origin = {
-			width:  img.width(),
-			height: img.height()
-		};
-		var win_size = getWindowSize(),
-			h_ratio = win_size.height / img_size_origin.height,
-			w_ratio = win_size.width / img_size_origin.width;
-		// set zoom, make sure img not out of window
-		zoom.curr = (h_ratio < w_ratio) ?
-					(h_ratio < 1.0 ? h_ratio : 1.0) :
-					(w_ratio < 1.0 ? w_ratio : 1.0);
-		updateSize();
-		setPosCenter();
-	}
-	// require: jquery.mousewheel plugin
-	// 鼠标滚轮控制图像缩放
-	function onWheel(e, delta) {
-		zoomImg(e.clientX, e.clientY, zoom.curr * (delta < 0 ? 0.9 : 1.1));
-		e.preventDefault();
-		return false;
-	}
-	// drag image with mouse
-	function onMousedown(e) {
-		// on Firefox means left button
-		if (e.button == 0) {
-			e.preventDefault();
-			ondrag = true;
-			last_mouse_pos = { x: e.clientX, y: e.clientY };
-			img.css("cursor", "move");
-		}
-	}
-	function onMousemove(e) {
-		if (ondrag) {
-			var img_pos = getPos(),
-				cur_x = e.clientX,
-				cur_y = e.clientY;
-			setPos(
-				img_pos.left + cur_x - last_mouse_pos.x,
-				img_pos.top  + cur_y - last_mouse_pos.y
-			);
-			last_mouse_pos = { x: cur_x, y: cur_y };
-		}
-	}
-	function onMouseup(e) {
-		if (ondrag) {
-			ondrag = false;
-			img.css("cursor", "default");
-		}
-	}
-	function cancelEvent(e) {
-		e.stopPropagation();
-		return false;
-	}
-
-	// 将构建的 img 元素返回
-	return img;
+	return function () {
+		var context = this;
+		var args = arguments;
+		if (timer) clearTimeout(timer);
+		timer = setTimeout(function () {
+			timer = null;
+			fn.apply(context, args);
+		}, delay);
+	};
 };
-},{"jquery":12,"jquery-mousewheel":11}],5:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 // 根据指定路径返回包含所有图像路径的对象
 
 function generateFromPath(baseUrl) {
@@ -462,11 +706,11 @@ module.exports = {
 	from: generateFromPath
 };
 
-},{}],6:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports = "<h1>基本信息<br /><span class=\"en\">Basic Information</span></h1>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-正面-微笑}</div>\n	</div>\n	<div class=\"col-r\">{data-基本信息}</div>\n</div>\n\n<h1>病史回顾<br /><span class=\"en\">Medical History</span></h1>\n<div class=\"col\">{data-病史回顾}</div>\n\n<h1>颜面检查<br /><span class=\"en\">Evaluation of facial morphometrics</span></h1>\n<h2>正面观<br /><span class=\"en\">Frontal examination</span></h2>\n<div class=\"col\">\n	<div class=\"img\">\n	    {img-正面-正常}\n	    <a class=\"img_link\" onclick=\"{url-正面-正常-画线}\">三等分线</a>\n	</div>\n	<div class=\"img\">\n	    {img-正面-微笑}\n	    <a class=\"img_link\" onclick=\"{url-正面-微笑-画线}\">中分线</a>\n	</div>\n</div>\n<div class=\"col\">{data-正面观}</div>\n<h2>侧面观<br /><span class=\"en\">lateral examination</span></h2>\n<div class=\"col\">\n	<div class=\"img\">{img-侧面-45度}</div>\n	<div class=\"img\">\n	    {img-侧面-90度}\n	    <a class=\"img_link\" onclick=\"{url-侧面-90度-画线}\">面型线</a>\n	    <a class=\"img_link\" onclick=\"{url-侧面-90度-画线1}\">唇部位置线</a>\n	</div>\n</div>\n<div class=\"col\">{data-侧面观}</div>\n\n<h1>颞下颌关节检查<br /><span class=\"en\">temporomandibular joint</span></h1>\n<div class=\"col\">{data-颞下颌关节检查}</div>\n\n<h1>牙合检查<br /><span class=\"en\">occlusion examination</span></h1>\n<h2>牙列<br /><span class=\"en\">permanent dentition</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-全牙列}</div>\n	</div>\n	<div class=\"col-r\">{data-全牙列}</div>\n</div>\n<h2>覆HE覆盖<br /><span class=\"en\">overbite & overjet</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-覆HE覆盖}</div>\n	</div>\n	<div class=\"col-r\">{data-覆HE覆盖}</div>\n</div>\n<h2>咬合关系<br /><span class=\"en\">moral relationship</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-左侧咬合}</div>\n	</div>\n	<div class=\"col-r\">{data-左侧咬合关系}</div>\n</div>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-右侧咬合}</div>\n	</div>\n	<div class=\"col-r\">{data-右侧咬合关系}</div>\n</div>\n<h2>牙弓形态分析<br /><span class=\"en\">symmetry of dental arch</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img rotate\">{img-上牙弓}</div>\n		<div class=\"img rotate\">{img-下牙弓}</div>\n	</div>\n	<div class=\"col-r\">{data-牙弓形态分析}</div>\n</div>\n\n<h1>模型分析<br /><span class=\"en\">dental cast analysis</span></h1>\n<div class=\"col\">{data-模型分析}</div>\n\n<h1>影像学检查</h1>\n<h2>全口曲面断层片<br /><span class=\"en\">full mouth panoramic radiographs</span></h2>\n<div class=\"col\"><div class=\"img\">{img-全口曲面断层片}</div></div>\n<div class=\"col\">{data-全口曲面断层片}</div>\n<h2>头颅侧位片<br /><span class=\"en\">cephalometrics</span></h2>\n<div class=\"col\"><div class=\"img\">{img-头颅侧位片}</div></div>\n<table class=\"result\">\n  <thead>\n    <tr>\n      <th class=\"field1\">测量项目</th>\n      <th class=\"field2\">正常值</th>\n      <th class=\"field3\">测量值</th>\n    </tr>\n  </thead>\n  <tbody>\n    {record-头颅侧位片}\n  </tbody>\n</table>\n<h3>意义</h3>\n<div class=\"col\">{data-意义}</div>\n\n<h1>诊断<br /><span class=\"en\">Diagnosis</span></h1>\n<div class=\"col\">{data-诊断}</div>\n\n<h1>矫治方案<br /><span class=\"en\">Treatment program</span></h1>\n<div class=\"col\">{data-矫治方案}</div>\n<h2>矫治步骤</h2>\n<ol class=\"col\">{list-矫治步骤}</ol>\n\n<h1>注意事项<br /><span class=\"en\">Precautions</span></h1>\n<ol class=\"col\">{list-注意事项}</ol>";
 
 
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 // 参考图像
 module.exports = {
 	"面型":     "imgs/面型对比图.png",
@@ -475,7 +719,7 @@ module.exports = {
 	"覆HE":     "imgs/覆合覆盖.png",
 	"磨牙关系": "imgs/磨牙关系.png"
 };
-},{}],8:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 // 英文名称
 module.exports ={
 	"姓名": "name",
@@ -495,193 +739,7 @@ module.exports ={
 	"Bolton指数": "bolton index",
 	"Spee曲度": "Spee curve"
 };
-},{}],9:[function(require,module,exports){
-// params will change the default setting of Catalog
-
-var $ = require('jquery');
-
-var items, activeItemIndex = -1,
-	// 目录结构部件
-	catalog, catalog_head, catalog_body, catalog_foot;
-
-function toggleBodyDisplay () {
-	catalog_body.toggle();
-};
-
-// 搜索所有的标题（h1-h6），生成对应的链接项添加到目录中
-function searchAndInsertTocItems() {
-	// 记录当前处理的各级标题编号
-	var sectNums = [0, 0, 0, 0, 0, 0];
-	function clearLowLevelSects(level) {
-		for (var i = level; i < 6; i++) {
-			sectNums[i] = 0;
-		}
-	}
-	function getSectNum(level) {
-		return sectNums.slice(0, level).join(".");
-	}
-
-	var headings = document.querySelectorAll("h1,h2,h3,h4,h5,h6");
-	// 构建数组后进行排序、处理
-	[].slice.call(headings, 0).sort(function (a, b) {
-		// 根据距文档顶部距离进行排序
-		return a.offsetTop - b.offsetTop;
-	}).forEach(function (head, index, heads) {
-		// 依次处理每个标题元素
-		var level = parseInt(head.tagName.charAt(1));
-		sectNums[level - 1]++;
-		clearLowLevelSects(level);
-		var sectNum = getSectNum(level);
-		
-		// 用于包裹原有标题的 <a>
-		var anchor = document.createElement("a");
-		anchor.id = "TOC" + sectNum;
-		head.parentNode.insertBefore(anchor, head);
-		anchor.appendChild(head);
-		
-		// 作为目录项链接原标题的 <a>
-		var headHtml = head.innerHTML.match(/^[^<]*/)[0];
-		var link = $("<a>", {
-			href: "#TOC" + sectNum,
-			title: headHtml
-		}).html(headHtml);
-
-		// 包裹目录项的 <div>，便于设置样式
-		var entry = $("<div>", {
-			"class": "item level" + level
-		});
-		entry.append(link);
-		catalog_body.append(entry);
-		
-		// 记录目录项信息到数组，用于页面滚动时查找、激活
-		items.push({
-			element: entry,
-			linkObj: anchor
-		});
-	});
-};
-
-// 遍历目录项，返回当前活动目录项的索引位置
-// 未找到返回 -1
-function getActiveItemIndex(scrollTop) {
-	var max = items.length - 1, min = 0;
-	// 尽量减小查找范围
-	if (activeItemIndex !== -1) {
-		var curr = items[activeItemIndex].linkObj.offsetTop;
-		if (curr > scrollTop) {
-			max = activeItemIndex;
-		} else {
-			min = activeItemIndex;
-		}
-	}
-	// 从后向前查找，返回第一个满足条件的位置
-	for (var i = max; i >= min; --i) {
-		if (items[i].linkObj.offsetTop <= scrollTop) {
-			return i;
-		}
-	}
-	return -1;
-}
-
-function onScroll(e) {
-	// 确保目录已初始化
-	if (items && items.length) {
-		// 当前页面的滚动距离
-		var scrollTop = document.documentElement.scrollTop + 
-						document.body.scrollTop;
-		if (scrollTop > 86/*页面头部高度*/) { 
-			catalog.addClass("fixed");
-		} else {
-			catalog.removeClass("fixed");
-		}
-		// 还未滚动到目录第一项的范围
-		if (activeItemIndex === -1 && items[0].linkObj.offsetTop > scrollTop) {
-			return;
-		} else if (activeItemIndex !== -1) {
-			items[activeItemIndex].element.removeClass("active");
-		}
-		activeItemIndex = getActiveItemIndex(scrollTop);
-		if (activeItemIndex !== -1) {
-			items[activeItemIndex].element.addClass("active");
-		}
-	}
-}
-
-window.addEventListener('scroll', onScroll);
-
-function create() {
-	// 如已有 catalog 部件，先移除
-	var tmp = $('#catalog'); if (tmp) { tmp.remove(); }
-
-	catalog = $("<div>", {
-		id: 'catalog'
-	});
-	catalog_head = $("<div>", {
-		"class": 'catalog_head',
-		click: toggleBodyDisplay
-	});
-	catalog_body = $("<div>", {
-		"class": 'catalog_body'
-	});
-	catalog_foot = $("<div>", {
-		"class": 'catalog_foot'
-	});
-	var btn_close = $("<div>", {
-		"class": "catalog_close",
-		click: function () { catalog.hide(); }
-	}).html("×");
-	catalog.append(catalog_head, catalog_body, catalog_foot, btn_close);
-
-	items = [];
-	searchAndInsertTocItems();
-	$(document.body).append(catalog);
-}
-module.exports = {
-	create: create
-};
-
-},{"jquery":12}],10:[function(require,module,exports){
-var $ = require('jquery');
-
-var ViewImage = require('./m-view_image');
-
-// 图片全屏预览组件
-
-var box = $("<div>", {
-	"class": "image_view",
-	click: close
-});
-var box_bg = $("<div>", {
-	"class": "image_view_bg"
-});
-var view_img;
-
-function show(img_src) {
-	view_img = new ViewImage(img_src);
-	box.append(view_img);
-	box.show();
-};
-
-function close() {
-	if (view_img) { // clear img
-		$(view_img).remove();
-		view_img = null;
-	}
-	box.hide();
-};
-
-// add handler on box no use, don't know why
-$(document.body).keydown(function (e) {
-	if (e.keyCode == 27 /* ESC */) close();
-});
-
-box.hide().append(box_bg).appendTo(document.body);
-
-module.exports = {
-	show: show
-};
-
-},{"./m-view_image":4,"jquery":12}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /*!
  * jQuery Mousewheel 3.1.13
  *
@@ -904,7 +962,7 @@ module.exports = {
 
 }));
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v1.11.3
  * http://jquery.com/

@@ -2,10 +2,10 @@
 
 var $ = require('jquery');
 
-var ImageViewer = require('./w-image_viewer');
+var ImageViewer = require('./components/image-viewer');
 var PageRender = require('./m-page_render');
 var CaseImgs = require('./v-case_imgs');
-var Catalog = require('./w-catalog');
+var Catalog = require('./components/catalog');
 var CaseQuery = require('./m-case_query');
 
 function initImgs() {
