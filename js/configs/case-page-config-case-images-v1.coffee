@@ -4,7 +4,7 @@ exports.from = (path) ->
 		"正面-正常":       "#{baseUrl}/1.jpg"
 		"正面-正常-画线":  "#{baseUrl}/11.jpg"
 		"正面-微笑":       "#{baseUrl}/2.jpg"
-		"正面-微笑-画线":  "#{baseUrl}/21.jpg"
+		"正面-微笑-画线":  "#{baseUrl}/22.jpg"
 		"侧面-45度":       "#{baseUrl}/3.jpg"
 		"侧面-90度":       "#{baseUrl}/4.jpg"
 		"侧面-90度-画线":  "#{baseUrl}/44.jpg"

@@ -1,4 +1,4 @@
-/*! luobotang-cases 0.3.2 build:2015-08-18 */
+/*! luobotang-cases 0.4.1 build:2015-08-18 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var $ = require('jquery');
 var CasePage = require('./components/case-page');
@@ -476,7 +476,7 @@ exports.from = function(path) {
     "正面-正常": baseUrl + "/1.jpg",
     "正面-正常-画线": baseUrl + "/11.jpg",
     "正面-微笑": baseUrl + "/2.jpg",
-    "正面-微笑-画线": baseUrl + "/21.jpg",
+    "正面-微笑-画线": baseUrl + "/22.jpg",
     "侧面-45度": baseUrl + "/3.jpg",
     "侧面-90度": baseUrl + "/4.jpg",
     "侧面-90度-画线": baseUrl + "/44.jpg",
@@ -494,59 +494,61 @@ exports.from = function(path) {
 
 
 },{}],8:[function(require,module,exports){
-function generateFromPath(path) {
-	var baseUrl = 'cases/' + path + '/';
-	return {
-		"正面-正常": baseUrl + "正面-正常.jpg",
-		"正面-正常-画线": baseUrl + "正面-正常-画线.jpg",
-		"正面-微笑": baseUrl + "正面-微笑.jpg",
-		"正面-微笑-画线": baseUrl + "正面-微笑-画线.jpg",
-		"侧面-45度": baseUrl + "侧面-45度.jpg",
-		"侧面-90度": baseUrl + "侧面-90度.jpg",
-		"侧面-90度-画线": baseUrl + "侧面-90度-画线.jpg",
-		"侧面-90度-画线1": baseUrl + "侧面-90度-画线1.jpg",
-		"全牙列": baseUrl + "全牙列.jpg",
-		"上牙弓": baseUrl + "上牙弓.jpg",
-		"下牙弓": baseUrl + "下牙弓.jpg",
-		"左侧咬合": baseUrl + "左侧咬合.jpg",
-		"右侧咬合": baseUrl + "右侧咬合.jpg",
-		"覆HE覆盖": baseUrl + "覆HE覆盖.jpg",
-		"全口曲面断层片": baseUrl + "全口曲面断层片.jpg",
-		"头颅侧位片": baseUrl + "头颅侧位片.jpg"
-	}
-}
-
-module.exports = {
-	from: generateFromPath
+exports.from = function(path) {
+  var baseUrl;
+  baseUrl = 'cases/' + path;
+  return {
+    "正面-正常": baseUrl + "/正面-正常.jpg",
+    "正面-正常-画线": baseUrl + "/正面-正常-画线.jpg",
+    "正面-微笑": baseUrl + "/正面-微笑.jpg",
+    "正面-微笑-画线": baseUrl + "/正面-微笑-画线.jpg",
+    "侧面-45度": baseUrl + "/侧面-45度.jpg",
+    "侧面-90度": baseUrl + "/侧面-90度.jpg",
+    "侧面-90度-画线": baseUrl + "/侧面-90度-画线.jpg",
+    "侧面-90度-画线1": baseUrl + "/侧面-90度-画线1.jpg",
+    "全牙列": baseUrl + "/全牙列.jpg",
+    "上牙弓": baseUrl + "/上牙弓.jpg",
+    "下牙弓": baseUrl + "/下牙弓.jpg",
+    "左侧咬合": baseUrl + "/左侧咬合.jpg",
+    "右侧咬合": baseUrl + "/右侧咬合.jpg",
+    "覆HE覆盖": baseUrl + "/覆HE覆盖.jpg",
+    "全口曲面断层片": baseUrl + "/全口曲面断层片.jpg",
+    "头颅侧位片": baseUrl + "/头颅侧位片.jpg"
+  };
 };
+
 
 },{}],9:[function(require,module,exports){
-module.exports ={
-	"姓名": "name",
-	"年龄": "age",
-	"性别": "sex",
-	"身高": "height",
-	"体重": "weight",
-	"医学病史": "medical history",
-	"口腔医学病史": "dental history",
-	"既往正畸治疗史": "orthodontic treatment",
-	"家族史": "family history",
-	"不良习惯": "oral bad habits",
-	"面部对称性": "facial symmetry",
-	"面型": "facial profile",
-	"覆HE": "overbite",
-	"拥挤度": "crowding degree",
-	"Bolton指数": "bolton index",
-	"Spee曲度": "Spee curve"
+module.exports = {
+  "姓名": "name",
+  "年龄": "age",
+  "性别": "sex",
+  "身高": "height",
+  "体重": "weight",
+  "医学病史": "medical history",
+  "口腔医学病史": "dental history",
+  "既往正畸治疗史": "orthodontic treatment",
+  "家族史": "family history",
+  "不良习惯": "oral bad habits",
+  "面部对称性": "facial symmetry",
+  "面型": "facial profile",
+  "覆HE": "overbite",
+  "拥挤度": "crowding degree",
+  "Bolton指数": "bolton index",
+  "Spee曲度": "Spee curve"
 };
+
+
 },{}],10:[function(require,module,exports){
 module.exports = {
-	"面型":     "imgs/面型对比图.jpg",
-	"下颌角":   "imgs/下颌角.jpg",
-	"唇部位置": "imgs/唇部位置.jpg",
-	"覆HE":     "imgs/覆合覆盖.jpg",
-	"磨牙关系": "imgs/磨牙关系.jpg"
+  "面型": "imgs/面型对比图.jpg",
+  "下颌角": "imgs/下颌角.jpg",
+  "唇部位置": "imgs/唇部位置.jpg",
+  "覆HE": "imgs/覆合覆盖.jpg",
+  "磨牙关系": "imgs/磨牙关系.jpg"
 };
+
+
 },{}],11:[function(require,module,exports){
 var $ = require('jquery')
 
