@@ -8,6 +8,7 @@ var SearchStore = require('./search-store');
 
 var PARAM_PATH = 'p';
 var pageInfoContainer = "#content";
+var MSG_ON_LOAD_FAIL = "抱歉，没有查找到相关信息";
 
 function initImgs() {
 	$("img").each(function () {
@@ -31,7 +32,7 @@ function initEvents() {
 }
 
 function onFail() {
-	$(pageInfoContainer).html("抱歉，没有查找到相关信息");
+	$(pageInfoContainer).html(MSG_ON_LOAD_FAIL);
 }
 
 exports.init = function () {
