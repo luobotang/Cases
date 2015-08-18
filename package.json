@@ -1,6 +1,6 @@
 {
   "name": "luobotang-cases",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Just do it for Mickey!",
   "main": "app.js",
   "scripts": {
