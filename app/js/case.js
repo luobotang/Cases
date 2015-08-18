@@ -1,4 +1,4 @@
-/*! luobotang-cases 0.3.0 build:2015-08-18 */
+/*! luobotang-cases 0.3.2 build:2015-08-18 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var $ = require('jquery');
 var CasePage = require('./components/case-page');
@@ -7,13 +7,14 @@ $(function () {
 	CasePage.init();
 });
 
-},{"./components/case-page":4,"jquery":15}],2:[function(require,module,exports){
+},{"./components/case-page":4,"jquery":16}],2:[function(require,module,exports){
 // 根据输入的患者数据，生成渲染页面
 
 var $ = require('jquery');
 
 var CasePage = require('./case-page-template');
 var CaseImages = require('../configs/case-page-config-case-images');
+var CaseImagesV1 = require('../configs/case-page-config-case-images-v1');
 var EnglishTerms = require('../configs/case-page-config-english-terms');
 var ReferenceImages = require('../configs/case-page-config-reference-images');
 
@@ -112,8 +113,11 @@ function parseArray(obj) {
 }
 
 function renderPage(caseObj, path) {
-	caseImgs = CaseImages.from(path)
-	var baseUrl = "";
+	// 区分文件版本使用不同图片映射方式
+	var caseImgs = caseObj.version === 1 ?
+		CaseImagesV1.from(path) :
+		CaseImages.from(path);
+
 	return CasePage.replace(
 	// 返回由数据填充的 html 文本
 	// 1. img
@@ -170,7 +174,7 @@ function renderPage(caseObj, path) {
 module.exports = {
 	render: renderPage
 };
-},{"../configs/case-page-config-case-images":7,"../configs/case-page-config-english-terms":8,"../configs/case-page-config-reference-images":9,"./case-page-template":3,"jquery":15}],3:[function(require,module,exports){
+},{"../configs/case-page-config-case-images":8,"../configs/case-page-config-case-images-v1":7,"../configs/case-page-config-english-terms":9,"../configs/case-page-config-reference-images":10,"./case-page-template":3,"jquery":16}],3:[function(require,module,exports){
 module.exports = "<h1>基本信息<br /><span class=\"en\">Basic Information</span></h1>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-正面-微笑}</div>\n	</div>\n	<div class=\"col-r\">{data-基本信息}</div>\n</div>\n\n<h1>病史回顾<br /><span class=\"en\">Medical History</span></h1>\n<div class=\"col\">{data-病史回顾}</div>\n\n<h1>颜面检查<br /><span class=\"en\">Evaluation of facial morphometrics</span></h1>\n<h2>正面观<br /><span class=\"en\">Frontal examination</span></h2>\n<div class=\"col\">\n	<div class=\"img\">\n	    {img-正面-正常}\n	    <a class=\"img_link\" data-img-src=\"{url-正面-正常-画线}\">三等分线</a>\n	</div>\n	<div class=\"img\">\n	    {img-正面-微笑}\n	    <a class=\"img_link\" data-img-src=\"{url-正面-微笑-画线}\">中分线</a>\n	</div>\n</div>\n<div class=\"col\">{data-正面观}</div>\n<h2>侧面观<br /><span class=\"en\">lateral examination</span></h2>\n<div class=\"col\">\n	<div class=\"img\">{img-侧面-45度}</div>\n	<div class=\"img\">\n	    {img-侧面-90度}\n	    <a class=\"img_link\" data-img-src=\"{url-侧面-90度-画线}\">面型线</a>\n	    <a class=\"img_link\" data-img-src=\"{url-侧面-90度-画线1}\">唇部位置线</a>\n	</div>\n</div>\n<div class=\"col\">{data-侧面观}</div>\n\n<h1>颞下颌关节检查<br /><span class=\"en\">temporomandibular joint</span></h1>\n<div class=\"col\">{data-颞下颌关节检查}</div>\n\n<h1>牙合检查<br /><span class=\"en\">occlusion examination</span></h1>\n<h2>牙列<br /><span class=\"en\">permanent dentition</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-全牙列}</div>\n	</div>\n	<div class=\"col-r\">{data-全牙列}</div>\n</div>\n<h2>覆HE覆盖<br /><span class=\"en\">overbite & overjet</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-覆HE覆盖}</div>\n	</div>\n	<div class=\"col-r\">{data-覆HE覆盖}</div>\n</div>\n<h2>咬合关系<br /><span class=\"en\">moral relationship</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-左侧咬合}</div>\n	</div>\n	<div class=\"col-r\">{data-左侧咬合关系}</div>\n</div>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img\">{img-右侧咬合}</div>\n	</div>\n	<div class=\"col-r\">{data-右侧咬合关系}</div>\n</div>\n<h2>牙弓形态分析<br /><span class=\"en\">symmetry of dental arch</span></h2>\n<div class=\"col\">\n	<div class=\"col-l\">\n		<div class=\"img rotate\">{img-上牙弓}</div>\n		<div class=\"img rotate\">{img-下牙弓}</div>\n	</div>\n	<div class=\"col-r\">{data-牙弓形态分析}</div>\n</div>\n\n<h1>模型分析<br /><span class=\"en\">dental cast analysis</span></h1>\n<div class=\"col\">{data-模型分析}</div>\n\n<h1>影像学检查</h1>\n<h2>全口曲面断层片<br /><span class=\"en\">full mouth panoramic radiographs</span></h2>\n<div class=\"col\"><div class=\"img\">{img-全口曲面断层片}</div></div>\n<div class=\"col\">{data-全口曲面断层片}</div>\n<h2>头颅侧位片<br /><span class=\"en\">cephalometrics</span></h2>\n<div class=\"col\"><div class=\"img\">{img-头颅侧位片}</div></div>\n<table class=\"result\">\n  <thead>\n    <tr>\n      <th class=\"field1\">测量项目</th>\n      <th class=\"field2\">正常值</th>\n      <th class=\"field3\">测量值</th>\n    </tr>\n  </thead>\n  <tbody>\n    {record-头颅侧位片}\n  </tbody>\n</table>\n<h3>意义</h3>\n<div class=\"col\">{data-意义}</div>\n\n<h1>诊断<br /><span class=\"en\">Diagnosis</span></h1>\n<div class=\"col\">{data-诊断}</div>\n\n<h1>矫治方案<br /><span class=\"en\">Treatment program</span></h1>\n<div class=\"col\">{data-矫治方案}</div>\n<h2>矫治步骤</h2>\n<ol class=\"col\">{list-矫治步骤}</ol>\n\n<h1>注意事项<br /><span class=\"en\">Precautions</span></h1>\n<ol class=\"col\">{list-注意事项}</ol>";
 
 
@@ -227,7 +231,7 @@ exports.init = function () {
 			initImgs();
 		}).fail(onFail);
 };
-},{"./case-page-render":2,"./catalog":5,"./search-store":6,"image-viewer":12,"jquery":15,"xsm-url-utils":16}],5:[function(require,module,exports){
+},{"./case-page-render":2,"./catalog":5,"./search-store":6,"image-viewer":13,"jquery":16,"xsm-url-utils":17}],5:[function(require,module,exports){
 // params will change the default setting of Catalog
 
 var $ = require('jquery');
@@ -395,7 +399,7 @@ module.exports = {
 	create: create
 };
 
-},{"../utils/lazy-invoke":11,"jquery":15}],6:[function(require,module,exports){
+},{"../utils/lazy-invoke":12,"jquery":16}],6:[function(require,module,exports){
 // 查询模块，使得能够根据用户输入信息查找指定患者的相关信息
 // 病例列表
 
@@ -464,7 +468,32 @@ module.exports = {
 	getCaseInfo: getCaseInfo,
 	searchPath: searchPath
 };
-},{"../utils/CasesWebUtils":10,"jquery":15}],7:[function(require,module,exports){
+},{"../utils/CasesWebUtils":11,"jquery":16}],7:[function(require,module,exports){
+exports.from = function(path) {
+  var baseUrl;
+  baseUrl = 'cases/' + path;
+  return {
+    "正面-正常": baseUrl + "/1.jpg",
+    "正面-正常-画线": baseUrl + "/11.jpg",
+    "正面-微笑": baseUrl + "/2.jpg",
+    "正面-微笑-画线": baseUrl + "/21.jpg",
+    "侧面-45度": baseUrl + "/3.jpg",
+    "侧面-90度": baseUrl + "/4.jpg",
+    "侧面-90度-画线": baseUrl + "/44.jpg",
+    "侧面-90度-画线1": baseUrl + "/444.jpg",
+    "全牙列": baseUrl + "/5.jpg",
+    "上牙弓": baseUrl + "/6.jpg",
+    "下牙弓": baseUrl + "/7.jpg",
+    "左侧咬合": baseUrl + "/9.jpg",
+    "右侧咬合": baseUrl + "/8.jpg",
+    "覆HE覆盖": baseUrl + "/0.jpg",
+    "全口曲面断层片": baseUrl + "/全口曲面断层片.jpg",
+    "头颅侧位片": baseUrl + "/头颅侧位片.jpg"
+  };
+};
+
+
+},{}],8:[function(require,module,exports){
 function generateFromPath(path) {
 	var baseUrl = 'cases/' + path + '/';
 	return {
@@ -491,7 +520,7 @@ module.exports = {
 	from: generateFromPath
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports ={
 	"姓名": "name",
 	"年龄": "age",
@@ -510,7 +539,7 @@ module.exports ={
 	"Bolton指数": "bolton index",
 	"Spee曲度": "Spee curve"
 };
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = {
 	"面型":     "imgs/面型对比图.jpg",
 	"下颌角":   "imgs/下颌角.jpg",
@@ -518,7 +547,7 @@ module.exports = {
 	"覆HE":     "imgs/覆合覆盖.jpg",
 	"磨牙关系": "imgs/磨牙关系.jpg"
 };
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var $ = require('jquery')
 
 var URL_CASE_LIST = "cases/caselist.txt"
@@ -530,7 +559,7 @@ module.exports = {
 		$.get(URL_CASE_LIST)
 			.done(function (data) {
 				if (typeof data === 'string') {
-					caselist = data.split("\r\n")
+					var caselist = data.split("\r\n")
 						.filter(Boolean) // ȥ���մ�
 						.sort()
 						.reverse(); // �������ݷ���ǰ
@@ -556,7 +585,7 @@ module.exports = {
 		return d.promise();
 	}
 }
-},{"jquery":15}],11:[function(require,module,exports){
+},{"jquery":16}],12:[function(require,module,exports){
 var DEFAULT_DELAY_TIME = 50; //ms
 
 module.exports = function (fn, delay) {
@@ -576,7 +605,7 @@ module.exports = function (fn, delay) {
 		}, delay);
 	};
 };
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var $ = require('jquery');
 
 var ViewImage = require('./lib/viewer-image');
@@ -620,7 +649,7 @@ module.exports = {
 	close: close
 };
 
-},{"./lib/viewer-image":13,"jquery":15}],13:[function(require,module,exports){
+},{"./lib/viewer-image":14,"jquery":16}],14:[function(require,module,exports){
 var $ = require('jquery');
 var jqueryMousewheel = require('jquery-mousewheel');
 
@@ -781,7 +810,7 @@ module.exports = function (img_src) {
 	// 将构建的 img 元素返回
 	return img;
 };
-},{"jquery":15,"jquery-mousewheel":14}],14:[function(require,module,exports){
+},{"jquery":16,"jquery-mousewheel":15}],15:[function(require,module,exports){
 /*!
  * jQuery Mousewheel 3.1.13
  *
@@ -1004,7 +1033,7 @@ module.exports = function (img_src) {
 
 }));
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v1.11.3
  * http://jquery.com/
@@ -11357,7 +11386,7 @@ return jQuery;
 
 }));
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 (function() {
 	var Utils = {};
 

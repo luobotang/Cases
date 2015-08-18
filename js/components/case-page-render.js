@@ -104,7 +104,7 @@ function parseArray(obj) {
 
 function renderPage(caseObj, path) {
 	// 区分文件版本使用不同图片映射方式
-	var caseImgs = caseObj.version === '1' ?
+	var caseImgs = caseObj.version === 1 ?
 		CaseImagesV1.from(path) :
 		CaseImages.from(path);
 
