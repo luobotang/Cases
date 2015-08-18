@@ -1,5 +1,3 @@
-// 根据指定路径返回包含所有图像路径的对象
-
 function generateFromPath(path) {
 	var baseUrl = 'cases/' + path + '/';
 	return {

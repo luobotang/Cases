@@ -2,24 +2,22 @@
 
 var $ = require('jquery');
 
-var CasePage = require('./v-case_page');
-var EnTerms = require('./v-english_terms');
-var CompImgs = require('./v-comp_imgs');
-var ImageViewer = require('image-viewer');
-
-// 设置图片查看器的全局引用
-window.ImageViewer = window.ImageViewer || ImageViewer;
+var CasePage = require('./case-page-template');
+var CaseImages = require('../configs/case-page-config-case-images');
+var EnglishTerms = require('../configs/case-page-config-english-terms');
+var ReferenceImages = require('../configs/case-page-config-reference-images');
 
 function renderData(key, value) {
+
 	var hasImg = "", showImg = "", en = "";
-	// 有参考图像
-	if (CompImgs[key]) {
+
+	if (ReferenceImages[key]) {
 		hasImg = " has_img";
-		showImg = "onclick='ImageViewer.show(\"" + CompImgs[key] + "\")'";
+		showImg = ' data-img-src="' + ReferenceImages[key] + '"';
 	}
-	// 有英文名称
-	if (EnTerms[key]) {
-		en = "<br /><span class='en'>" + EnTerms[key] + "</span>";
+
+	if (EnglishTerms[key]) {
+		en = "<br /><span class='en'>" + EnglishTerms[key] + "</span>";
 	}
 
 	// 牙列以对象方式记录，包含“上”、“下”属性
@@ -29,9 +27,14 @@ function renderData(key, value) {
 		value = value.join("<br />");
 	}
 
-	return "<div class='record'><div class='key'>" + 
-	"<span class='name" + hasImg + "' " + showImg + ">" + key + "</span>" + en + "</div>" +
-	"<div class='value'>" + value + "</div></div>";
+	return (
+	'<div class="record">' +
+		'<div class="key">' + 
+			"<span class='name" + hasImg + "'" + showImg + ">" + key + "</span>" + en + 
+		'</div>' +
+		'<div class="value">' + value + '</div>' +
+	'</div>'
+	);
 };
 
 function renderList(id, item) {
@@ -98,7 +101,8 @@ function parseArray(obj) {
 	return $.isArray(obj) ? obj.join("<br />") : obj;
 }
 
-function renderPage(caseObj, caseImgs) {
+function renderPage(caseObj, path) {
+	caseImgs = CaseImages.from(path)
 	var baseUrl = "";
 	return CasePage.replace(
 	// 返回由数据填充的 html 文本
@@ -149,7 +153,7 @@ function renderPage(caseObj, caseImgs) {
 	})
 	// 5.图像路径
 	.replace(/{url-([^}]+)}/g, function (match, name) {
-		return "ImageViewer.show('" + caseImgs[name] + "')";
+		return caseImgs[name];
 	});
 };
 

@@ -1,4 +1,3 @@
-// 参考图像
 module.exports = {
 	"面型":     "imgs/面型对比图.png",
 	"下颌角":   "imgs/下颌角.png",

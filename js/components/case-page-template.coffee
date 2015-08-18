@@ -15,11 +15,11 @@ module.exports = """
 <div class="col">
 	<div class="img">
 	    {img-正面-正常}
-	    <a class="img_link" onclick="{url-正面-正常-画线}">三等分线</a>
+	    <a class="img_link" data-img-src="{url-正面-正常-画线}">三等分线</a>
 	</div>
 	<div class="img">
 	    {img-正面-微笑}
-	    <a class="img_link" onclick="{url-正面-微笑-画线}">中分线</a>
+	    <a class="img_link" data-img-src="{url-正面-微笑-画线}">中分线</a>
 	</div>
 </div>
 <div class="col">{data-正面观}</div>
@@ -28,8 +28,8 @@ module.exports = """
 	<div class="img">{img-侧面-45度}</div>
 	<div class="img">
 	    {img-侧面-90度}
-	    <a class="img_link" onclick="{url-侧面-90度-画线}">面型线</a>
-	    <a class="img_link" onclick="{url-侧面-90度-画线1}">唇部位置线</a>
+	    <a class="img_link" data-img-src="{url-侧面-90度-画线}">面型线</a>
+	    <a class="img_link" data-img-src="{url-侧面-90度-画线1}">唇部位置线</a>
 	</div>
 </div>
 <div class="col">{data-侧面观}</div>

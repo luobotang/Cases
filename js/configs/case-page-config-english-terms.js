@@ -1,4 +1,3 @@
-// 英文名称
 module.exports ={
 	"姓名": "name",
 	"年龄": "age",
