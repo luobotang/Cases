@@ -106,7 +106,7 @@ function renderPage(caseObj, caseImgs) {
 	/{img-([^}]+)}/g, function (match, name) {
 		var img = caseImgs[name];
 		if (img) {
-			return "<img src='" + img + "'>";
+			return '<img src="' + img + '">';
 		}
 	}).replace(
 	// 2. data

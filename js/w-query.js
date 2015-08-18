@@ -1,7 +1,7 @@
 var $ = require('jquery');
 
 var w_pre = require('./w-preview');
-// 查询部件
+var CaseQuery = require('./m-case_query');
 
 // 构造查询部件的各个组成元素
 // 查询部件
@@ -57,6 +57,7 @@ function showPreview(path) {
 function hidePreview() {
 	ele_pre.hide();
 }
+
 // 显示输入提示
 function showPrompt(prompts) {
 	if (prompts && prompts.length) {
@@ -69,27 +70,38 @@ function showPrompt(prompts) {
 		hidePrompt();
 	}
 }
+
 function hidePrompt() {
 	ele_prompt.hide();
 }
 
+function queryCase(name) {
+	CaseQuery.queryPath(name, function (path) {
+		if (path) {
+			window.open("case.htm?p=" + name);
+		} else {
+			showMessage("没有找到相关的信息，检查一下是否输入有误？");
+		}
+	});
+}
+
 module.exports = {
-	// 初始化查询部件
-	// @queryFunc 执行查询的函数
-	// @genPromptsFunc 用于生成输入提示的函数
-	init: function (queryFunc, genPromptsFunc) {
+	/*
+	 * @param {selector} container
+	 */
+	init: function (container) {
 		// 执行查询
 		ele_btn.click(function () {
 			hidePrompt();
 			hideMessage();
-			queryFunc(ele_con.val());
+			queryCase(ele_con.val());
 		});
 		ele_con.keyup(function () {
 			var value = ele_con.val().trim();
 			hidePreview();
 			hideMessage();
 			if (value) {
-				showPrompt(genPromptsFunc(value));
+				showPrompt(CaseQuery.searchPath(value));
 			} else {
 				hidePrompt();
 			}
@@ -97,11 +109,9 @@ module.exports = {
 		hidePrompt();
 		hideMessage();
 		hidePreview();
-	},
-	// 将部件添加到页面包裹元素中
-	appendTo: function (element) {
-		$(element).addClass("case_query").append(
+
+		$(container).addClass("case_query").append(
 			ele_imgbg, ele_input, ele_prompt, ele_pre, ele_message );
-	},
-	showMessage: showMessage
+		return this;
+	}
 };

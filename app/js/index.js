@@ -1,23 +1,10 @@
-/*! luobotang-cases 0.2.0 build:2015-08-17 */
+/*! luobotang-cases 0.2.0 build:2015-08-18 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var Query = require('./w-query');
-var CaseQuery = require('./m-case_query');
 
-var ele_query = document.getElementById("query");
+Query.init(document.getElementById("query"));
 
-Query.init(queryCase, CaseQuery.getCasePaths);
-Query.appendTo(ele_query);
-
-function queryCase(name) {
-	CaseQuery.queryPath(name, function (path) {
-		if (path) {
-			window.open("case.htm?p=" + name);
-		} else {
-			Query.showMessage("没有找到相关的信息，检查一下是否输入有误？");
-		}
-	});
-}
-},{"./m-case_query":2,"./w-query":6}],2:[function(require,module,exports){
+},{"./w-query":6}],2:[function(require,module,exports){
 // 查询模块，使得能够根据用户输入信息查找指定患者的相关信息
 // 病例列表
 
@@ -29,18 +16,24 @@ CasesWebUtils.getCaseList().done(function (data) {
 	caselist = data;
 });
 
-// 根据条件查询病例列表，返回满足条件的病例的路径
-// replaceFunc 用于对病例路径进行替换
-function getCasePaths(condition, replaceFunc) {
-	replaceFunc = replaceFunc || function (value) {
-		return "<em>" + value + "</em>";
-	};
-	var cons = condition.split(/\s+/);
-	if (!(cons && cons.length)) {
-		return [];
+function replaceFunc(value) {
+	return "<em>" + value + "</em>";
+}
+
+/*
+ * 查询满足条件的路径
+ * @param {string} condition - 可以是空格分隔的多个查询条件
+ * @returns {string[]|null} 成功返回匹配结果字符串（与查询条件相符的部分被<em>包裹）数组，失败返回 null
+ */
+function searchPath(condition) {
+	if (!caselist || !condition) {
+		return null;
 	}
+
+	var cons = condition.split(/\s+/);
+
 	// 从后向前查找，先返回最新的内容
-	return caselist.reduceRight(function (result, item) {
+	return caselist.reduce(function (result, item) {
 		var success = 0, fail = 0;
 		var rep = cons.reduce(function (replacement, con) {
 			if (replacement.search(con) >= 0) {
@@ -63,33 +56,21 @@ function getCasePaths(condition, replaceFunc) {
 function queryPath(name, done) {
 	// 未初始化病例列表时，先进行初始化
 	if (caselist) {
-		findPathThen(name, done);
+		done(findPath(name));
 	}
 
 	CasesWebUtils.getCaseList()
 		.done(function (data) {
 			caselist = data;
-			findPathThen(name, done);
+			done(findPath(name));
 		}).fail(function () {
 			done(null);
 		});
 }
 
-function findPathThen(path, done) {
-	var index = findePath(name);
-	return done(index > -1 ? caselist[index] : null);
-}
-
-function findePath(path) {
-	name = name.trim();
-	// 从后向前查找，首先返回最后录入的内容
-	for (var i = caselist.length - 1; i >= 0; i--) {
-		var path = caselist[i];
-		if (path === name) {
-			return i;
-		}
-	}
-	return -1;
+function findPath(path) {
+	var index = caselist.indexOf(path); // Array.prototype.indexOf() IE9+
+	return index > -1 ? caselist[index] : null;
 }
 
 function getCaseInfo(path) {
@@ -99,7 +80,7 @@ function getCaseInfo(path) {
 module.exports = {
 	queryPath: queryPath,
 	getCaseInfo: getCaseInfo,
-	getCasePaths: getCasePaths
+	searchPath: searchPath
 };
 },{"./utils/CasesWebUtils":3,"jquery":7}],3:[function(require,module,exports){
 var $ = require('jquery')
@@ -113,8 +94,10 @@ module.exports = {
 		$.get(URL_CASE_LIST)
 			.done(function (data) {
 				if (typeof data === 'string') {
-					caselist = data.split("\r\n");
-					caselist.sort();
+					caselist = data.split("\r\n")
+						.filter(Boolean) // ȥ���մ�
+						.sort()
+						.reverse(); // �������ݷ���ǰ
 					d.resolve(caselist);
 				}
 			})
@@ -167,7 +150,7 @@ exports.create = function(path) {
 var $ = require('jquery');
 
 var w_pre = require('./w-preview');
-// 查询部件
+var CaseQuery = require('./m-case_query');
 
 // 构造查询部件的各个组成元素
 // 查询部件
@@ -223,6 +206,7 @@ function showPreview(path) {
 function hidePreview() {
 	ele_pre.hide();
 }
+
 // 显示输入提示
 function showPrompt(prompts) {
 	if (prompts && prompts.length) {
@@ -235,27 +219,38 @@ function showPrompt(prompts) {
 		hidePrompt();
 	}
 }
+
 function hidePrompt() {
 	ele_prompt.hide();
 }
 
+function queryCase(name) {
+	CaseQuery.queryPath(name, function (path) {
+		if (path) {
+			window.open("case.htm?p=" + name);
+		} else {
+			showMessage("没有找到相关的信息，检查一下是否输入有误？");
+		}
+	});
+}
+
 module.exports = {
-	// 初始化查询部件
-	// @queryFunc 执行查询的函数
-	// @genPromptsFunc 用于生成输入提示的函数
-	init: function (queryFunc, genPromptsFunc) {
+	/*
+	 * @param {selector} container
+	 */
+	init: function (container) {
 		// 执行查询
 		ele_btn.click(function () {
 			hidePrompt();
 			hideMessage();
-			queryFunc(ele_con.val());
+			queryCase(ele_con.val());
 		});
 		ele_con.keyup(function () {
 			var value = ele_con.val().trim();
 			hidePreview();
 			hideMessage();
 			if (value) {
-				showPrompt(genPromptsFunc(value));
+				showPrompt(CaseQuery.searchPath(value));
 			} else {
 				hidePrompt();
 			}
@@ -263,16 +258,14 @@ module.exports = {
 		hidePrompt();
 		hideMessage();
 		hidePreview();
-	},
-	// 将部件添加到页面包裹元素中
-	appendTo: function (element) {
-		$(element).addClass("case_query").append(
+
+		$(container).addClass("case_query").append(
 			ele_imgbg, ele_input, ele_prompt, ele_pre, ele_message );
-	},
-	showMessage: showMessage
+		return this;
+	}
 };
 
-},{"./w-preview":5,"jquery":7}],7:[function(require,module,exports){
+},{"./m-case_query":2,"./w-preview":5,"jquery":7}],7:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v1.11.3
  * http://jquery.com/

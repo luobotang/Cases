@@ -9,18 +9,24 @@ CasesWebUtils.getCaseList().done(function (data) {
 	caselist = data;
 });
 
-// 根据条件查询病例列表，返回满足条件的病例的路径
-// replaceFunc 用于对病例路径进行替换
-function getCasePaths(condition, replaceFunc) {
-	replaceFunc = replaceFunc || function (value) {
-		return "<em>" + value + "</em>";
-	};
-	var cons = condition.split(/\s+/);
-	if (!(cons && cons.length)) {
-		return [];
+function replaceFunc(value) {
+	return "<em>" + value + "</em>";
+}
+
+/*
+ * 查询满足条件的路径
+ * @param {string} condition - 可以是空格分隔的多个查询条件
+ * @returns {string[]|null} 成功返回匹配结果字符串（与查询条件相符的部分被<em>包裹）数组，失败返回 null
+ */
+function searchPath(condition) {
+	if (!caselist || !condition) {
+		return null;
 	}
+
+	var cons = condition.split(/\s+/);
+
 	// 从后向前查找，先返回最新的内容
-	return caselist.reduceRight(function (result, item) {
+	return caselist.reduce(function (result, item) {
 		var success = 0, fail = 0;
 		var rep = cons.reduce(function (replacement, con) {
 			if (replacement.search(con) >= 0) {
@@ -43,33 +49,21 @@ function getCasePaths(condition, replaceFunc) {
 function queryPath(name, done) {
 	// 未初始化病例列表时，先进行初始化
 	if (caselist) {
-		findPathThen(name, done);
+		done(findPath(name));
 	}
 
 	CasesWebUtils.getCaseList()
 		.done(function (data) {
 			caselist = data;
-			findPathThen(name, done);
+			done(findPath(name));
 		}).fail(function () {
 			done(null);
 		});
 }
 
-function findPathThen(path, done) {
-	var index = findePath(name);
-	return done(index > -1 ? caselist[index] : null);
-}
-
-function findePath(path) {
-	name = name.trim();
-	// 从后向前查找，首先返回最后录入的内容
-	for (var i = caselist.length - 1; i >= 0; i--) {
-		var path = caselist[i];
-		if (path === name) {
-			return i;
-		}
-	}
-	return -1;
+function findPath(path) {
+	var index = caselist.indexOf(path); // Array.prototype.indexOf() IE9+
+	return index > -1 ? caselist[index] : null;
 }
 
 function getCaseInfo(path) {
@@ -79,5 +73,5 @@ function getCaseInfo(path) {
 module.exports = {
 	queryPath: queryPath,
 	getCaseInfo: getCaseInfo,
-	getCasePaths: getCasePaths
+	searchPath: searchPath
 };
