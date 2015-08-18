@@ -1,3 +1,4 @@
+*.log
 cases/
 node_modules/
 app/cases/*/

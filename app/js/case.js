@@ -1,7 +1,5 @@
-/*! luobotang-cases 0.2.1 build:2015-08-18 */
+/*! luobotang-cases 0.3.0 build:2015-08-18 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-// 根据传入页面的查询字符串显示对应的患者初诊页面
-
 var $ = require('jquery');
 var CasePage = require('./components/case-page');
 
@@ -187,6 +185,7 @@ var SearchStore = require('./search-store');
 
 var PARAM_PATH = 'p';
 var pageInfoContainer = "#content";
+var MSG_ON_LOAD_FAIL = "抱歉，没有查找到相关信息";
 
 function initImgs() {
 	$("img").each(function () {
@@ -210,7 +209,7 @@ function initEvents() {
 }
 
 function onFail() {
-	$(pageInfoContainer).html("抱歉，没有查找到相关信息");
+	$(pageInfoContainer).html(MSG_ON_LOAD_FAIL);
 }
 
 exports.init = function () {
@@ -513,11 +512,11 @@ module.exports ={
 };
 },{}],9:[function(require,module,exports){
 module.exports = {
-	"面型":     "imgs/面型对比图.png",
-	"下颌角":   "imgs/下颌角.png",
-	"唇部位置": "imgs/唇部位置.png",
-	"覆HE":     "imgs/覆合覆盖.png",
-	"磨牙关系": "imgs/磨牙关系.png"
+	"面型":     "imgs/面型对比图.jpg",
+	"下颌角":   "imgs/下颌角.jpg",
+	"唇部位置": "imgs/唇部位置.jpg",
+	"覆HE":     "imgs/覆合覆盖.jpg",
+	"磨牙关系": "imgs/磨牙关系.jpg"
 };
 },{}],10:[function(require,module,exports){
 var $ = require('jquery')
