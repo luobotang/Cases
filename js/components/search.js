@@ -1,7 +1,7 @@
 var $ = require('jquery');
 
-var Preview = require('./w-preview');
-var CaseQuery = require('./m-case_query');
+var Preview = require('./search-preview');
+var Store = require('./search-store');
 
 var $container;
 
@@ -27,7 +27,7 @@ function showPrompt(prompts) {
 			.find('.prompt')
 			.html('<ul>' + 
 				prompts.map(function (item) {
-					return '<li class="case-preview-item" data-path="' + item[0] + '">' +
+					return '<li class="case-prompt-item" data-path="' + item[0] + '">' +
 						item[1] +
 						'<li>';
 				}).join('') + 
@@ -46,9 +46,9 @@ function getCondition() { return $container.find('input').val().trim(); }
 function setCondition(val) { $container.find('input').val(val); }
 
 function queryCase(name) {
-	CaseQuery.queryPath(name, function (path) {
+	Store.queryPath(name, function (path) {
 		if (path) {
-			window.open("case.htm?p=" + name);
+			window.open("case.htm?p=" + encodeURIComponent(name), '_blank');
 		} else {
 			showMessage("没有找到相关的数据，检查一下是否输入有误？");
 		}
@@ -70,12 +70,12 @@ function init(container) {
 			hidePreview();
 			hideMessage();
 			if (value) {
-				showPrompt(CaseQuery.searchPath(value));
+				showPrompt(Store.searchPath(value));
 			} else {
 				hidePrompt();
 			}
 		})
-		.on('click', '.case-preview-item', function (e) {
+		.on('click', '.case-prompt-item', function (e) {
 			var path = $(e.currentTarget).attr('data-path');
 			setCondition(path);
 			showPreview(path);

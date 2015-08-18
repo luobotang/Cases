@@ -1,19 +1,23 @@
-.case_preview {
-	padding: 5px 0;
+@charset "UTF-8";
+
+@import "npm://xsm-less-utils";
+
+.case-preview-item {
+	padding: 5px;
 	border: 1px solid #eee;
-	.preview_img_wrapper, .preview_info {
-		float: left;
-		height: 60px;
+	#xsm.clear-float();
+
+	.image,
+	.info {
+		float: left; height: 60px;
 	}
-	.preview_img_wrapper {
-		width: 80px;
+	.image {
+		width: 60px;
 		img {
-			display: block;
-			margin: 0 auto;
-			max-height: 100%;
+			display: block; max-height: 100%;
 		}
 	}
-	.preview_info {
+	.info {
 		p {
 			line-height: 30px;
 			font-size: 14px;
@@ -23,10 +27,17 @@
 			color: #4BA9E6;
 		}
 	}
-	// fix float
-	&:before, &:after {
-		content: "";
-		display: block;
-		clear: both;
+
+	.cmd {
+		float: right;
+
+		.btn {
+			display: block; height: 60px; width: 100px;
+			line-height: 60px; text-align: center;
+			background: #B0DAF5  url(../icons/icon-open.png) center center no-repeat; color: #fff;
+			&:hover {
+				background-color: @theme-color;
+			}
+		}
 	}
 }

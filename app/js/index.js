@@ -1,15 +1,26 @@
 /*! luobotang-cases 0.2.1 build:2015-08-18 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var Query = require('./w-query');
+var $, DateUtils;
 
-Query.init('#query');
+$ = require('jquery');
 
-},{"./w-query":6}],2:[function(require,module,exports){
+DateUtils = require('../utils/DateUtils');
+
+exports.create = function(path) {
+  var date, i, name;
+  i = path.indexOf("-");
+  date = DateUtils.formatDate(path.slice(0, i));
+  name = path.slice(i + 1);
+  return "<div class=\"case-preview-item\">\n	<div class=\"image\">\n		<a href=\"case.htm?p=" + path + "\" target=\"_blank\">\n			<img src=\"cases/" + path + "/正面-微笑.jpg\">\n		</a>\n	</div>\n	<div class=\"info\">\n		<p>姓名：<span class=\"name\">" + name + "</span></p>\n		<p>初诊日期：<span class=\"date\">" + date + "</span></p>\n	</div>\n	<div class=\"cmd\">\n		<a href=\"case.htm?p=" + path + "\" target=\"_blank\" class=\"btn\"></a>\n	</div>\n</div>";
+};
+
+
+},{"../utils/DateUtils":6,"jquery":7}],2:[function(require,module,exports){
 // 查询模块，使得能够根据用户输入信息查找指定患者的相关信息
 // 病例列表
 
 var $ = require('jquery');
-var CasesWebUtils = require('./utils/CasesWebUtils');
+var CasesWebUtils = require('../utils/CasesWebUtils');
 
 var caselist;
 CasesWebUtils.getCaseList().done(function (data) {
@@ -73,7 +84,109 @@ module.exports = {
 	getCaseInfo: getCaseInfo,
 	searchPath: searchPath
 };
-},{"./utils/CasesWebUtils":3,"jquery":7}],3:[function(require,module,exports){
+},{"../utils/CasesWebUtils":5,"jquery":7}],3:[function(require,module,exports){
+var $ = require('jquery');
+
+var Preview = require('./search-preview');
+var Store = require('./search-store');
+
+var $container;
+
+function showMessage(message) {
+	$container.find('.query_message').html(message).show();
+}
+
+function hideMessage() {
+	$container.find('.query_message').hide();
+}
+
+function showPreview(path) {
+	$container.find('.preview').html(Preview.create(path)).show();
+}
+
+function hidePreview() {
+	$container.find('.preview').hide();
+}
+
+function showPrompt(prompts) {
+	if (prompts && prompts.length) {
+		$container
+			.find('.prompt')
+			.html('<ul>' + 
+				prompts.map(function (item) {
+					return '<li class="case-prompt-item" data-path="' + item[0] + '">' +
+						item[1] +
+						'<li>';
+				}).join('') + 
+				'</ul>')
+			.show();
+	} else {
+		hidePrompt();
+	}
+}
+
+function hidePrompt() {
+	$container.find('.prompt').hide();
+}
+
+function getCondition() { return $container.find('input').val().trim(); }
+function setCondition(val) { $container.find('input').val(val); }
+
+function queryCase(name) {
+	Store.queryPath(name, function (path) {
+		if (path) {
+			window.open("case.htm?p=" + encodeURIComponent(name), '_blank');
+		} else {
+			showMessage("没有找到相关的数据，检查一下是否输入有误？");
+		}
+	});
+}
+
+/*
+ * @param {selector} container
+ */
+function init(container) {
+	$container = $(container)
+		.on('click', '.query_go', function () {
+			hidePrompt();
+			hideMessage();
+			queryCase(getCondition());
+		})
+		.on('keyup', 'input', function () {
+			var value = getCondition();
+			hidePreview();
+			hideMessage();
+			if (value) {
+				showPrompt(Store.searchPath(value));
+			} else {
+				hidePrompt();
+			}
+		})
+		.on('click', '.case-prompt-item', function (e) {
+			var path = $(e.currentTarget).attr('data-path');
+			setCondition(path);
+			showPreview(path);
+			hidePrompt();
+		})
+		.on('click', '.query_message', function (e) {
+			$(e.currentTarget).hide();
+		});
+
+	hidePrompt();
+	hideMessage();
+	hidePreview();
+
+	return this;
+}
+
+module.exports = {
+	init: init 
+};
+
+},{"./search-preview":1,"./search-store":2,"jquery":7}],4:[function(require,module,exports){
+require('./components/search').init('#search');
+
+},{"./components/search":3}],5:[function(require,module,exports){
 var $ = require('jquery')
 
 var URL_CASE_LIST = "cases/caselist.txt"
@@ -111,7 +224,7 @@ module.exports = {
 		return d.promise();
 	}
 }
-},{"jquery":7}],4:[function(require,module,exports){
+},{"jquery":7}],6:[function(require,module,exports){
 module.exports = {
 	formatDate: function (date) {
 		return (
@@ -121,122 +234,7 @@ module.exports = {
 		);
 	}
 }
-},{}],5:[function(require,module,exports){
-var $, DateUtils;
-
-$ = require('jquery');
-
-DateUtils = require('./utils/DateUtils');
-
-exports.create = function(path) {
-  var date, i, name;
-  i = path.indexOf("-");
-  date = DateUtils.formatDate(path.slice(0, i));
-  name = path.slice(i + 1);
-  return "<div class=\"case_preview fix-float\">\n	<div class=\"preview_img_wrapper\">\n		<a href=\"case.htm?p=" + path + "\" target=\"_blank\">\n			<img src=\"cases/" + path + "/正面-微笑.jpg\">\n		</a>\n	</div>\n	<div class=\"preview_info\">\n		<p>姓名：<span class=\"name\">" + name + "</span></p>\n		<p>初诊日期：<span class=\"date\">" + date + "</span></p>\n	</div>\n</div>";
-};
-
-
-},{"./utils/DateUtils":4,"jquery":7}],6:[function(require,module,exports){
-var $ = require('jquery');
-
-var Preview = require('./w-preview');
-var CaseQuery = require('./m-case_query');
-
-var $container;
-
-function showMessage(message) {
-	$container.find('.query_message').html(message).show();
-}
-
-function hideMessage() {
-	$container.find('.query_message').hide();
-}
-
-function showPreview(path) {
-	$container.find('.preview').html(Preview.create(path)).show();
-}
-
-function hidePreview() {
-	$container.find('.preview').hide();
-}
-
-function showPrompt(prompts) {
-	if (prompts && prompts.length) {
-		$container
-			.find('.prompt')
-			.html('<ul>' + 
-				prompts.map(function (item) {
-					return '<li class="case-preview-item" data-path="' + item[0] + '">' +
-						item[1] +
-						'<li>';
-				}).join('') + 
-				'</ul>')
-			.show();
-	} else {
-		hidePrompt();
-	}
-}
-
-function hidePrompt() {
-	$container.find('.prompt').hide();
-}
-
-function getCondition() { return $container.find('input').val().trim(); }
-function setCondition(val) { $container.find('input').val(val); }
-
-function queryCase(name) {
-	CaseQuery.queryPath(name, function (path) {
-		if (path) {
-			window.open("case.htm?p=" + name);
-		} else {
-			showMessage("没有找到相关的数据，检查一下是否输入有误？");
-		}
-	});
-}
-
-/*
- * @param {selector} container
- */
-function init(container) {
-	$container = $(container)
-		.on('click', '.query_go', function () {
-			hidePrompt();
-			hideMessage();
-			queryCase(getCondition());
-		})
-		.on('keyup', 'input', function () {
-			var value = getCondition();
-			hidePreview();
-			hideMessage();
-			if (value) {
-				showPrompt(CaseQuery.searchPath(value));
-			} else {
-				hidePrompt();
-			}
-		})
-		.on('click', '.case-preview-item', function (e) {
-			var path = $(e.currentTarget).attr('data-path');
-			setCondition(path);
-			showPreview(path);
-			hidePrompt();
-		})
-		.on('click', '.query_message', function (e) {
-			$(e.currentTarget).hide();
-		});
-
-	hidePrompt();
-	hideMessage();
-	hidePreview();
-
-	return this;
-}
-
-module.exports = {
-	init: init 
-};
-
-},{"./m-case_query":2,"./w-preview":5,"jquery":7}],7:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v1.11.3
  * http://jquery.com/
@@ -10589,4 +10587,4 @@ return jQuery;
 
 }));
 
-},{}]},{},[1]);
+},{}]},{},[4]);

@@ -8,7 +8,7 @@ var ImageViewer = require('image-viewer');
 var PageRender = require('./m-page_render');
 var CaseImgs = require('./v-case_imgs');
 var Catalog = require('./components/catalog');
-var CaseQuery = require('./m-case_query');
+var SearchStore = require('./components/search-store');
 
 function initImgs() {
 	$("img").each(function () {
@@ -27,7 +27,7 @@ $(document.body).click(function (e) {
 // 根据查询字符串的内容获取路径
 var path = decodeURIComponent(window.location.search.replace("?p=", ""));
 
-CaseQuery.getCaseInfo(path)
+SearchStore.getCaseInfo(path)
 	.done(function (data) {
 		document.title = data["基本信息"]["姓名"];
 		$("#content").html(PageRender.render(data, CaseImgs.from(path)));
@@ -37,7 +37,7 @@ CaseQuery.getCaseInfo(path)
 		$("#content").html("抱歉，没有查找到相关信息");
 	});
 
-},{"./components/catalog":2,"./m-case_query":3,"./m-page_render":4,"./v-case_imgs":7,"image-viewer":11,"jquery":14}],2:[function(require,module,exports){
+},{"./components/catalog":2,"./components/search-store":3,"./m-page_render":4,"./v-case_imgs":7,"image-viewer":11,"jquery":14}],2:[function(require,module,exports){
 // params will change the default setting of Catalog
 
 var $ = require('jquery');
@@ -210,7 +210,7 @@ module.exports = {
 // 病例列表
 
 var $ = require('jquery');
-var CasesWebUtils = require('./utils/CasesWebUtils');
+var CasesWebUtils = require('../utils/CasesWebUtils');
 
 var caselist;
 CasesWebUtils.getCaseList().done(function (data) {
@@ -274,7 +274,7 @@ module.exports = {
 	getCaseInfo: getCaseInfo,
 	searchPath: searchPath
 };
-},{"./utils/CasesWebUtils":5,"jquery":14}],4:[function(require,module,exports){
+},{"../utils/CasesWebUtils":5,"jquery":14}],4:[function(require,module,exports){
 // 根据输入的患者数据，生成渲染页面
 
 var $ = require('jquery');

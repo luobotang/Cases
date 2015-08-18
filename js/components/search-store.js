@@ -2,7 +2,7 @@
 // 病例列表
 
 var $ = require('jquery');
-var CasesWebUtils = require('./utils/CasesWebUtils');
+var CasesWebUtils = require('../utils/CasesWebUtils');
 
 var caselist;
 CasesWebUtils.getCaseList().done(function (data) {

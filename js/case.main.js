@@ -6,7 +6,7 @@ var ImageViewer = require('image-viewer');
 var PageRender = require('./m-page_render');
 var CaseImgs = require('./v-case_imgs');
 var Catalog = require('./components/catalog');
-var CaseQuery = require('./m-case_query');
+var SearchStore = require('./components/search-store');
 
 function initImgs() {
 	$("img").each(function () {
@@ -25,7 +25,7 @@ $(document.body).click(function (e) {
 // 根据查询字符串的内容获取路径
 var path = decodeURIComponent(window.location.search.replace("?p=", ""));
 
-CaseQuery.getCaseInfo(path)
+SearchStore.getCaseInfo(path)
 	.done(function (data) {
 		document.title = data["基本信息"]["姓名"];
 		$("#content").html(PageRender.render(data, CaseImgs.from(path)));

@@ -1,3 +1,1 @@
-var Query = require('./w-query');
-
-Query.init('#query');
+require('./components/search').init('#search');
