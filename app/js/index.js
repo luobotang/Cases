@@ -1,8 +1,8 @@
-/*! luobotang-cases 0.2.0 build:2015-08-18 */
+/*! luobotang-cases 0.2.1 build:2015-08-18 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var Query = require('./w-query');
 
-Query.init(document.getElementById("query"));
+Query.init('#query');
 
 },{"./w-query":6}],2:[function(require,module,exports){
 // 查询模块，使得能够根据用户输入信息查找指定患者的相关信息
@@ -16,14 +16,10 @@ CasesWebUtils.getCaseList().done(function (data) {
 	caselist = data;
 });
 
-function replaceFunc(value) {
-	return "<em>" + value + "</em>";
-}
-
 /*
  * 查询满足条件的路径
  * @param {string} condition - 可以是空格分隔的多个查询条件
- * @returns {string[]|null} 成功返回匹配结果字符串（与查询条件相符的部分被<em>包裹）数组，失败返回 null
+ * @returns {Array[]|null} 成功返回匹配结果数组[[path, matchReplacePath], ...]，失败返回 null
  */
 function searchPath(condition) {
 	if (!caselist || !condition) {
@@ -31,22 +27,17 @@ function searchPath(condition) {
 	}
 
 	var cons = condition.split(/\s+/);
+	var reg = new RegExp(cons.join('|'), 'g');
 
 	// 从后向前查找，先返回最新的内容
-	return caselist.reduce(function (result, item) {
-		var success = 0, fail = 0;
-		var rep = cons.reduce(function (replacement, con) {
-			if (replacement.search(con) >= 0) {
-				success++;
-				return replacement.replace(con, replaceFunc);
-			} else {
-				fail++;
-				return replacement;
-			}
-		}, item);
-		// 匹配成功的次数不小于失败次数
-		if (success + fail > 0 && success >= fail)  {
-			result.push(rep);
+	return caselist.reduce(function (result, path) {
+		var success = 0;
+		var replace = path.replace(reg, function (match) {
+			success++;
+			return "<em>" + match + "</em>";
+		});
+		if (success > 0)  {
+			result.push([path, replace]);
 		}
 		return result;
 	}, []);
@@ -149,104 +140,73 @@ exports.create = function(path) {
 },{"./utils/DateUtils":4,"jquery":7}],6:[function(require,module,exports){
 var $ = require('jquery');
 
-var w_pre = require('./w-preview');
+var Preview = require('./w-preview');
 var CaseQuery = require('./m-case_query');
 
-// 构造查询部件的各个组成元素
-// 查询部件
-var ele_imgbg = $("<div>", {
-	"class": "query_imgbg"
-});
-var ele_input = $("<div>", {
-	"class": "query"
-});
-var ele_con = $("<input>", {
-	"class": "query_condition",
-	placeholder: "输入查询对象的就诊日期、姓名，例如：20140101 王伟"
-});
-var ele_btn = $("<span>", {
-	"class": "query_go"
-});
-ele_con.appendTo(ele_input);
-ele_btn.appendTo(ele_input);
-// 输入提示
-var ele_prompt = $("<div>", {
-	"class": "prompt",
-	// 选择某条提示后，将提示的路径填入文本框，并显示预览
-	click: function (e) {
-		var t = e.target, path;
-		if (t.tagName === "LI") {
-			path = t.innerHTML.replace(/<[^>]*>/g, "");
-			ele_con.val(path);
-			showPreview(path);
-			hidePrompt();
-		}
-	}
-});
-// 预览部件
-var ele_pre = $("<div>");
-// 消息部件
-var ele_message = $("<div>", {
-	"class": "query_message",
-	click: function () {
-		ele_message.hide();
-	}
-})
+var $container;
 
 function showMessage(message) {
-	ele_message.html(message);
-	ele_message.show();
-}
-function hideMessage() {
-	ele_message.hide();
-}
-function showPreview(path) {
-	ele_pre.html(w_pre.create(path)).show();
-}
-function hidePreview() {
-	ele_pre.hide();
+	$container.find('.query_message').html(message).show();
 }
 
-// 显示输入提示
+function hideMessage() {
+	$container.find('.query_message').hide();
+}
+
+function showPreview(path) {
+	$container.find('.preview').html(Preview.create(path)).show();
+}
+
+function hidePreview() {
+	$container.find('.preview').hide();
+}
+
 function showPrompt(prompts) {
 	if (prompts && prompts.length) {
-		ele_prompt.html(prompts.reduce(
-		function (html, item) {
-			return html + "<li>" + item + "</li>";
-		}, "<ul>") + "</ul>");
-		ele_prompt.show();
+		$container
+			.find('.prompt')
+			.html('<ul>' + 
+				prompts.map(function (item) {
+					return '<li class="case-preview-item" data-path="' + item[0] + '">' +
+						item[1] +
+						'<li>';
+				}).join('') + 
+				'</ul>')
+			.show();
 	} else {
 		hidePrompt();
 	}
 }
 
 function hidePrompt() {
-	ele_prompt.hide();
+	$container.find('.prompt').hide();
 }
+
+function getCondition() { return $container.find('input').val().trim(); }
+function setCondition(val) { $container.find('input').val(val); }
 
 function queryCase(name) {
 	CaseQuery.queryPath(name, function (path) {
 		if (path) {
 			window.open("case.htm?p=" + name);
 		} else {
-			showMessage("没有找到相关的信息，检查一下是否输入有误？");
+			showMessage("没有找到相关的数据，检查一下是否输入有误？");
 		}
 	});
 }
 
-module.exports = {
-	/*
-	 * @param {selector} container
-	 */
-	init: function (container) {
-		// 执行查询
-		ele_btn.click(function () {
+/*
+ * @param {selector} container
+ */
+function init(container) {
+	$container = $(container)
+		.on('click', '.query_go', function () {
 			hidePrompt();
 			hideMessage();
-			queryCase(ele_con.val());
-		});
-		ele_con.keyup(function () {
-			var value = ele_con.val().trim();
+			queryCase(getCondition());
+		})
+		.on('keyup', 'input', function () {
+			var value = getCondition();
 			hidePreview();
 			hideMessage();
 			if (value) {
@@ -254,15 +214,26 @@ module.exports = {
 			} else {
 				hidePrompt();
 			}
+		})
+		.on('click', '.case-preview-item', function (e) {
+			var path = $(e.currentTarget).attr('data-path');
+			setCondition(path);
+			showPreview(path);
+			hidePrompt();
+		})
+		.on('click', '.query_message', function (e) {
+			$(e.currentTarget).hide();
 		});
-		hidePrompt();
-		hideMessage();
-		hidePreview();
 
-		$(container).addClass("case_query").append(
-			ele_imgbg, ele_input, ele_prompt, ele_pre, ele_message );
-		return this;
-	}
+	hidePrompt();
+	hideMessage();
+	hidePreview();
+
+	return this;
+}
+
+module.exports = {
+	init: init 
 };
 
 },{"./m-case_query":2,"./w-preview":5,"jquery":7}],7:[function(require,module,exports){

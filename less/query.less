@@ -10,16 +10,15 @@
 	{background-position: 0 0},
 	{background-position: -700px 0}
 );
+.image-cloud {
+	height: 250px;
+	background: url("../imgs/cloud.jpg") repeat 0 0;
+	#xsm.animation(query-bg-move 100s linear infinite);
+}
 
 .case_query {
 	position: relative;
-	margin: 1em 0;
-	min-height: 450px;
-	.query_imgbg {
-		height: 250px;
-		background: url("../imgs/cloud.jpg") repeat 0 0;
-		#xsm.animation(query-bg-move 100s linear infinite);
-	}
+
 	.query {
 		border: 1px solid @query-theme-color;
 		position: relative;
@@ -31,6 +30,10 @@
 			line-height: @query-h;
 			font: inherit; border: none;
 			color: @query-theme-color;
+			outline: none;
+			&:focus {
+				box-shadow: inset 0 0 5px @query-theme-color;
+			}
 		}
 
 		.query_go {

@@ -9,14 +9,10 @@ CasesWebUtils.getCaseList().done(function (data) {
 	caselist = data;
 });
 
-function replaceFunc(value) {
-	return "<em>" + value + "</em>";
-}
-
 /*
  * 查询满足条件的路径
  * @param {string} condition - 可以是空格分隔的多个查询条件
- * @returns {string[]|null} 成功返回匹配结果字符串（与查询条件相符的部分被<em>包裹）数组，失败返回 null
+ * @returns {Array[]|null} 成功返回匹配结果数组[[path, matchReplacePath], ...]，失败返回 null
  */
 function searchPath(condition) {
 	if (!caselist || !condition) {
@@ -24,22 +20,17 @@ function searchPath(condition) {
 	}
 
 	var cons = condition.split(/\s+/);
+	var reg = new RegExp(cons.join('|'), 'g');
 
 	// 从后向前查找，先返回最新的内容
-	return caselist.reduce(function (result, item) {
-		var success = 0, fail = 0;
-		var rep = cons.reduce(function (replacement, con) {
-			if (replacement.search(con) >= 0) {
-				success++;
-				return replacement.replace(con, replaceFunc);
-			} else {
-				fail++;
-				return replacement;
-			}
-		}, item);
-		// 匹配成功的次数不小于失败次数
-		if (success + fail > 0 && success >= fail)  {
-			result.push(rep);
+	return caselist.reduce(function (result, path) {
+		var success = 0;
+		var replace = path.replace(reg, function (match) {
+			success++;
+			return "<em>" + match + "</em>";
+		});
+		if (success > 0)  {
+			result.push([path, replace]);
 		}
 		return result;
 	}, []);
