@@ -9,7 +9,7 @@ module.exports = {
 		$.get(URL_CASE_LIST)
 			.done(function (data) {
 				if (typeof data === 'string') {
-					caselist = data.split("\r\n")
+					var caselist = data.split("\r\n")
 						.filter(Boolean) // 去除空串
 						.sort()
 						.reverse(); // 最新数据放在前

@@ -4,6 +4,7 @@ var $ = require('jquery');
 
 var CasePage = require('./case-page-template');
 var CaseImages = require('../configs/case-page-config-case-images');
+var CaseImagesV1 = require('../configs/case-page-config-case-images-v1');
 var EnglishTerms = require('../configs/case-page-config-english-terms');
 var ReferenceImages = require('../configs/case-page-config-reference-images');
 
@@ -102,8 +103,11 @@ function parseArray(obj) {
 }
 
 function renderPage(caseObj, path) {
-	caseImgs = CaseImages.from(path)
-	var baseUrl = "";
+	// 区分文件版本使用不同图片映射方式
+	var caseImgs = caseObj.version === '1' ?
+		CaseImagesV1.from(path) :
+		CaseImages.from(path);
+
 	return CasePage.replace(
 	// 返回由数据填充的 html 文本
 	// 1. img
