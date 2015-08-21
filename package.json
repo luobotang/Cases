@@ -1,10 +1,11 @@
 {
   "name": "luobotang-cases",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Just do it for Mickey!",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node node_modules/local-web-server/bin/ws -d app",
+    "test": "start http://localhost:8000/index.htm"
   },
   "repository": {
     "type": "git",
@@ -25,6 +26,7 @@
     "jquery": "^1.11.3",
     "jquery-mousewheel": "^3.1.13",
     "less-plugin-npm-import": "^2.1.0",
+    "local-web-server": "^0.5.22",
     "xsm-less-utils": "^0.1.0",
     "xsm-url-utils": "^1.0.0"
   }
