@@ -4,8 +4,8 @@
   "description": "Just do it for Mickey!",
   "main": "app.js",
   "scripts": {
-    "start": "node node_modules/local-web-server/bin/ws -d app",
-    "test": "start http://localhost:8000/index.htm"
+    "start": "node app",
+    "test": "start http://localhost:8080/index.htm"
   },
   "repository": {
     "type": "git",
