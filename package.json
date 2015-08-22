@@ -1,10 +1,10 @@
 {
   "name": "luobotang-cases",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Just do it for Mickey!",
   "main": "app.js",
   "scripts": {
-    "start": "node app",
+    "start": "start node app",
     "test": "start http://localhost:8080/index.htm"
   },
   "repository": {
