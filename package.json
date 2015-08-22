@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "start node app",
-    "test": "start http://localhost:8080/index.htm"
+    "test": "start http://localhost:8080/"
   },
   "repository": {
     "type": "git",
