@@ -1,77 +1,67 @@
-// params will change the default setting of Catalog
+var $ = require('jquery')
+var LazyInvoke = require('lazy-invoke')
+var escapeHTML = require('escape-html')
 
-var $ = require('jquery');
+var FIX_TOP_HEIGHT = 86 // px
+var SELECTOR_ALL_HEADINGS = "h1,h2,h3,h4,h5,h6"
 
-var LazyInvoke = require('lazy-invoke');
-
-var items, activeItemIndex = -1,
-	// 目录结构部件
-	catalog, catalog_head, catalog_body, catalog_foot;
-
-var FIX_TOP_HEIGHT = 86; //px
-
-function toggleBodyDisplay () {
-	catalog_body.toggle();
-};
+var items
+var activeItemIndex = -1
+var catalog
+var catalog_body
 
 // 搜索所有的标题（h1-h6），生成对应的链接项添加到目录中
 function searchAndInsertTocItems() {
 	// 记录当前处理的各级标题编号
-	var sectNums = [0, 0, 0, 0, 0, 0];
+	var sectNums = [0, 0, 0, 0, 0, 0]
 
 	function clearLowLevelSects(level) {
 		for (var i = level; i < 6; i++) {
-			sectNums[i] = 0;
+			sectNums[i] = 0
 		}
 	}
 
 	function getSectNum(level) {
-		return sectNums.slice(0, level).join(".");
+		return sectNums.slice(0, level).join(".")
 	}
 
-	var headings = document.querySelectorAll("h1,h2,h3,h4,h5,h6");
-
 	// 构建数组后进行排序、处理
-	[].slice.call(headings, 0)
-		.sort(function (a, b) {
-			// 根据距文档顶部距离进行排序
-			return a.offsetTop - b.offsetTop;
-		})
-		.forEach(function (head, index, heads) {
+	$(SELECTOR_ALL_HEADINGS)
+		.each(function (i, head) {
 			// 依次处理每个标题元素
-			var level = parseInt(head.tagName.charAt(1));
-			sectNums[level - 1]++;
-			clearLowLevelSects(level);
-			var sectNum = getSectNum(level);
+			var level = parseInt(head.tagName[1], 10)
+			sectNums[level - 1]++
+			clearLowLevelSects(level)
+			var sectNum = getSectNum(level)
 
-			// 作为目录项链接原标题的 <a>
-			var headHtml = head.innerHTML.match(/^[^<]*/)[0];
-			var link = $("<a>", {
-				href: "#TOC" + sectNum,
-				title: headHtml
-			}).text(headHtml);
+			// 只取内部第一个文本节点
+			var headHtml = escapeHTML(head.firstChild && head.firstChild.nodeValue || '')
 
 			// 标题链接
 			// 插入标题内作为第一个节点
-			var anchor = document.createElement("a");
-			anchor.className = 'toc-anchor';
-			anchor.id = "TOC" + sectNum;
-			head.insertBefore(anchor, head.firstChild);
+			var anchor = document.createElement("a")
+			anchor.className = 'toc-anchor'
+			anchor.id = "TOC" + sectNum
+			head.insertBefore(anchor, head.firstChild)
 
 			// 包裹目录项的 <div>，便于设置样式
-			var entry = $("<div>", {
-				"class": "item level" + level
-			});
-			entry.append(link);
-			catalog_body.append(entry);
+			var entry = $(
+				'<div class="item level' + level + '">' +
+					'<a href="#TOC'  +sectNum + '" title="' + headHtml + '">' +
+						headHtml +
+					'</a>' +
+				'</div>'
+			)
+
+			catalog_body.append(entry)
 			
 			// 记录目录项信息到数组，用于页面滚动时查找、激活
 			items.push({
 				element: entry,
 				linkObj: anchor
-			});
-		});
-};
+			})
+		})
+}
 
 // 遍历目录项，返回当前活动目录项的索引位置
 // 未找到返回 -1
@@ -123,44 +113,43 @@ function onScroll(e) {
 
 function create() {
 	// 如已有 catalog 部件，先移除
-	var tmp = $('#catalog');
-	if (tmp) { tmp.remove(); }
+	$('#catalog').remove()
 
-	init();
+	init()
 
-	catalog = $("<div>", {
-		id: 'catalog'
-	});
-	catalog_head = $("<div>", {
-		"class": 'catalog_head',
-		click: toggleBodyDisplay
-	});
-	catalog_body = $("<div>", {
-		"class": 'catalog_body'
-	});
-	catalog_foot = $("<div>", {
-		"class": 'catalog_foot'
-	});
-	var btn_close = $("<div>", {
-		"class": "catalog_close",
-		click: function () { catalog.hide(); }
-	}).html("×");
-	catalog.append(catalog_head, catalog_body, catalog_foot, btn_close);
+	catalog = $(
+		'<div id="catalog">'+
+			'<div class="catalog_head"></div>' +
+			'<div class="catalog_body"></div>' +
+			'<div class="catalog_foot"></div>' +
+			'<div class="catalog_close">×</div>' +
+		'</div>'
+	)
 
-	items = [];
-	searchAndInsertTocItems();
-	$(document.body).append(catalog);
+	catalog_body = catalog.find('.catalog_body')
+
+	items = []
+	searchAndInsertTocItems()
+
+	catalog.appendTo('body')
+	// 初始化事件处理
+	.on('click', '.catalog_head', function () {
+		catalog_body.toggle()
+	})
+	.on('click', '.catalog_close', function () {
+		catalog.hide()
+	})
 }
 
-var __inited = false;
+var __inited = false
 
 function init() {
 	if (!__inited) {
-		$(window).on('scroll', LazyInvoke(onScroll, 100));
-		__inited = true;
+		$(window).on('scroll', LazyInvoke(onScroll, 100))
+		__inited = true
 	}
 }
 
 module.exports = {
 	create: create
-};
+}

@@ -23,23 +23,20 @@
 		cursor: pointer;
 	}
 	.catalog_body {
+		color: #999;
 		.item {
-			height: 24px;
+			line-height: 24px;
 			a {
-				padding: 2px 1em 2px 2.5em;
-				display: block;
-				color: #999;
+				padding-left: 2em;
+				color: inherit;
 				&:hover {
 					color: @theme-color;
 				}
 			}
-			&:hover {
-				background-color: #EEE;
-			}
 		}
 		.active {
-			color: @theme-color !important;
-			background-color: #EEE;
+			color: @theme-color;
+			background-color: #f0f0f0;
 			background-image: url(../icons/direction_r_24.png);
 			.bg-img-as-icon(24px);
 		}
