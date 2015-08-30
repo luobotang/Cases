@@ -1,4 +1,4 @@
-/*! luobotang-cases 0.4.1 build:2015-08-18 */
+/*! luobotang-cases 0.4.5 build:2015-08-30 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var $ = require('jquery');
 var CasePage = require('./components/case-page');
@@ -231,12 +231,12 @@ exports.init = function () {
 			initImgs();
 		}).fail(onFail);
 };
-},{"./case-page-render":2,"./catalog":5,"./search-store":6,"image-viewer":13,"jquery":16,"xsm-url-utils":17}],5:[function(require,module,exports){
+},{"./case-page-render":2,"./catalog":5,"./search-store":6,"image-viewer":12,"jquery":16,"xsm-url-utils":18}],5:[function(require,module,exports){
 // params will change the default setting of Catalog
 
 var $ = require('jquery');
 
-var LazyInvoke = require('../utils/lazy-invoke');
+var LazyInvoke = require('lazy-invoke');
 
 var items, activeItemIndex = -1,
 	// 目录结构部件
@@ -399,7 +399,7 @@ module.exports = {
 	create: create
 };
 
-},{"../utils/lazy-invoke":12,"jquery":16}],6:[function(require,module,exports){
+},{"jquery":16,"lazy-invoke":17}],6:[function(require,module,exports){
 // 查询模块，使得能够根据用户输入信息查找指定患者的相关信息
 // 病例列表
 
@@ -588,231 +588,240 @@ module.exports = {
 	}
 }
 },{"jquery":16}],12:[function(require,module,exports){
-var DEFAULT_DELAY_TIME = 50; //ms
+var $ = require('jquery')
 
-module.exports = function (fn, delay) {
+var ViewableImage = require('./lib/ViewableImage')
 
-	var timer;
-	if (typeof delay !== 'number' || delay < 0) {
-		delay = DEFAULT_DELAY_TIME;
-	}
-
-	return function () {
-		var context = this;
-		var args = arguments;
-		if (timer) clearTimeout(timer);
-		timer = setTimeout(function () {
-			timer = null;
-			fn.apply(context, args);
-		}, delay);
-	};
-};
-},{}],13:[function(require,module,exports){
-var $ = require('jquery');
-
-var ViewImage = require('./lib/viewer-image');
-
-var KEY_ESC = 27;
-
-// 图片全屏预览组件
+var KEY_ESC = 27
+var CLS_ON_IMAGE_VIEWING = 'on-image-viewing'
 
 var box = $("<div>", {
 	"class": "image-viewer-container",
 	click: close
-});
+})
 
-var view_img;
+var view_img = null
+var inited = false
 
 function show(img_src) {
-	view_img = new ViewImage(img_src);
-	box.append(view_img);
-	box.show();
-	$('body').addClass('on-image-viewing');
-};
+	if (!inited) {
+		$(function () {
+			show(img_src)
+		})
+		return
+	}
+	view_img = ViewableImage(img_src)
+	box.append(view_img)
+	box.show()
+	$('body').addClass(CLS_ON_IMAGE_VIEWING)
+}
 
 function close() {
-	if (view_img) { // clear img
-		$(view_img).remove();
-		view_img = null;
+	if (view_img) {
+		view_img.remove()
+		view_img = null
 	}
-	box.hide();
-	$('body').removeClass('on-image-viewing');
-};
+	box.hide()
+	$('body').removeClass(CLS_ON_IMAGE_VIEWING);
+}
 
-// add handler on box no use, don't know why
-$('body').keydown(function (e) {
-	if (e.keyCode == KEY_ESC) close();
-});
-
-box.hide().appendTo(document.body);
+$(function () {
+	inited = true
+	$(document).keydown(function (e) {
+		if (e.which == KEY_ESC) close()
+	})
+	box.hide().appendTo('body')
+})
 
 module.exports = {
 	show: show,
 	close: close
-};
+}
 
-},{"./lib/viewer-image":14,"jquery":16}],14:[function(require,module,exports){
-var $ = require('jquery');
-var jqueryMousewheel = require('jquery-mousewheel');
+},{"./lib/ViewableImage":13,"jquery":16}],13:[function(require,module,exports){
+var $ = require('jquery')
+var getWindowSize = require('get-window-size')
+require('jquery-mousewheel')($) // 初始化
 
-// 初始化 jQuery 插件
-jqueryMousewheel($);
+var cache = {}
 
-var cache = {};
+var CLS_VIEWER_IMAGE = 'viewable_image'
+var CLS_IMAGE_LOADED = 'img-loaded'
+var STYLE_CURSOR_IMAGE_MOVE = 'move'
+var STYLE_CURSOR_IMAGE_UNMOVE = 'default'
 
-// 依赖 mousewheel 插件提供的 jQuery 的鼠标滚轮事件
-module.exports = function (img_src) {
+function ViewableImage(img_src) {
 
-	var img_size_origin = { width: 0, height: 0 },
-		zoom = { last: 1.0, curr: 1.0 },
-		ondrag = false,
-		last_mouse_pos = { x: 0, y: 0 };
+	var imageOriginWidth
+	var imageOriginHeight
+	var zoom = 1.0
+	var ondrag = false
 
 	var img = $('<img>', {
-		"class": "viewable_image",
+		"class": CLS_VIEWER_IMAGE,
 		src: img_src
-	});
-
-	img.bind({
-		mousewheel: onWheel,
-		mousedown: onMousedown,
-		mousemove: onMousemove,
-		mouseup: onMouseup,
-		dragstart: cancelEvent,
-		click: cancelEvent
-	});
+	})
 
 	// 缓存图片路径，对于已缓存图片直接按已加载进行处理
 	if (!cache[img_src]) {
-		cache[img_src] = true;
-		img.on('load', onLoad);
+		cache[img_src] = true
+		img.on('load', onLoad)
 	} else {
-		setTimeout(onLoad, 0);
-	}
-
-	function setSize(width, height) {
-		//console.log("in setSize. width: " + width + ", height: " + height);
-		img.width(width).height(height);
-	}
-
-	// after changed zoom value, update img's size
-	function updateSize() {
-		setSize(
-			img_size_origin.width * zoom.curr,
-			img_size_origin.height * zoom.curr
-		);
-	}
-
-	function getSize(size) {
-		return {
-			width: img.width(),
-			height: img.height()
-		};
-	}
-
-	function getWindowSize() {
-		return {
-			width: 	window.innerWidth,
-			height: window.innerHeight
-		};
-	}
-
-	function getPos() {
-		return {
-			left: parseInt(img.css("left")),
-			top:  parseInt(img.css("top"))
-		};
-	}
-
-	function setPos(left, top) {
-		//console.log("in setPos. left: " + left + ", top: " + top);
-		img.css({ left: left + "px", top: top + "px" });
+		setTimeout(onLoad, 0)
 	}
 
 	function zoomImg(curr_x, curr_y, scale) {
-		//console.log("in zoomImg. curr_x: %s, curr_y: %s", curr_x, curr_y);
-		// when scroll with mouse's middle button scale the image
-		// but fix the mouse pointer on the image
-		zoom.last = zoom.curr;
-		zoom.curr = scale;
-		var img_pos = getPos();
-		updateSize();
-		setPos(
-			curr_x - (zoom.curr / zoom.last) * (curr_x - img_pos.left),
-			curr_y - (zoom.curr / zoom.last) * (curr_y - img_pos.top)
-		);
-	}
-
-	function setPosCenter() {
-		var img_size = getSize(),
-			win_size = getWindowSize();
-		setPos(
-			(win_size.width - img_size.width) / 2,
-			(win_size.height - img_size.height) / 2
-		);
+		var position = img.position()
+		// 以鼠标所在位置为中心缩放图像
+		var lastZoom = zoom
+		zoom = scale
+		img.width(imageOriginWidth * zoom)
+		img.height(imageOriginHeight * zoom)
+		img.css({
+			left: curr_x - (zoom / lastZoom) * (curr_x - position.left),
+			top: curr_y - (zoom / lastZoom) * (curr_y - position.top)
+		})
 	}
 
 	function onLoad() {
-		img.addClass('img-loaded');
-		// record the original image size
-		img_size_origin = {
-			width:  img.width(),
-			height: img.height()
-		};
-		var win_size = getWindowSize(),
-			h_ratio = win_size.height / img_size_origin.height,
-			w_ratio = win_size.width / img_size_origin.width;
-		// set zoom, make sure img not out of window
-		zoom.curr = (h_ratio < w_ratio) ?
-					(h_ratio < 1.0 ? h_ratio : 1.0) :
-					(w_ratio < 1.0 ? w_ratio : 1.0);
-		updateSize();
-		setPosCenter();
-	}
-	// require: jquery.mousewheel plugin
-	// 鼠标滚轮控制图像缩放
-	function onWheel(e, delta) {
-		zoomImg(e.clientX, e.clientY, zoom.curr * (delta < 0 ? 0.9 : 1.1));
-		e.preventDefault();
-		return false;
-	}
-	// drag image with mouse
-	function onMousedown(e) {
-		// on Firefox means left button
-		if (e.button == 0) {
-			e.preventDefault();
-			ondrag = true;
-			last_mouse_pos = { x: e.clientX, y: e.clientY };
-			img.css("cursor", "move");
+		img.addClass(CLS_IMAGE_LOADED)
+		// 检测图像是否超出窗口范围
+		// 若图像大小超出窗口范围，则缩小到窗口范围内
+		imageOriginWidth = img.width()
+		imageOriginHeight = img.height()
+		var win_size = getWindowSize()
+		var windowHeight = win_size.height
+		var windowWidth = win_size.width
+		var h_ratio = imageOriginHeight / windowHeight
+		var w_ratio = imageOriginWidth / windowWidth
+		var radio = Math.max(h_ratio, w_ratio)
+		if (radio > 1.0) {
+			zoom = 1 / radio
 		}
+		var imageNewWidth = imageOriginWidth * zoom
+		var imageNewHeight = imageOriginHeight * zoom
+		img
+		.width(imageNewWidth)
+		.height(imageNewHeight)
+		// 图像在窗口居中显示
+		.css({
+			left: (windowWidth - imageNewWidth) / 2,
+			top: (windowHeight - imageNewHeight) / 2
+		})
+
+		// 图像已加入页面后再绑定事件
+		// 提前绑定 mousewheel 在 IE8 下会报错
+		img.on({
+			mousewheel: onWheel,
+			mousedown: onMousedown,
+			mousemove: onMousemove,
+			mouseup: onMouseup,
+			click: cancelEvent, // 重要 - 避免点击后关闭窗口
+			dragstart: cancelEvent // 重要 - 避免不能拖动
+		})
 	}
+
+	// 鼠标滚轮控制图像缩放
+	function onWheel(e) {
+		// jquery-mousewheel 向下滚动 deltaY -1 向上滚动 deltaY 1
+		var isZoomIn = e.deltaY > 0
+		zoomImg(e.clientX, e.clientY, zoom * (isZoomIn ? 1.1 : 0.9))
+		e.preventDefault()
+		return false
+	}
+
+	var lastMousePositonX = 0
+	var lastMousePositonY = 0
+
+	// var BUTTON_LEFT = 0
+
+	function onMousedown(e) {
+		// 不再检测是否鼠标左键按下
+		// MouseEvent.button IE9+ support
+		// e.button === BUTTON_LEFT
+		ondrag = true
+		lastMousePositonX = e.clientX
+		lastMousePositonY = e.clientY
+		img.css("cursor", STYLE_CURSOR_IMAGE_MOVE)
+		e.preventDefault()
+		e.stopPropagation()
+	}
+
 	function onMousemove(e) {
 		if (ondrag) {
-			var img_pos = getPos(),
-				cur_x = e.clientX,
-				cur_y = e.clientY;
-			setPos(
-				img_pos.left + cur_x - last_mouse_pos.x,
-				img_pos.top  + cur_y - last_mouse_pos.y
-			);
-			last_mouse_pos = { x: cur_x, y: cur_y };
+			var img_pos = img.position()
+			var cur_x = e.clientX
+			var cur_y = e.clientY
+			img.css({
+				left: img_pos.left + cur_x - lastMousePositonX,
+				top: img_pos.top  + cur_y - lastMousePositonY
+			})
+			lastMousePositonX = cur_x
+			lastMousePositonY = cur_y
 		}
 	}
+
 	function onMouseup(e) {
 		if (ondrag) {
-			ondrag = false;
-			img.css("cursor", "default");
+			ondrag = false
+			img.css("cursor", STYLE_CURSOR_IMAGE_UNMOVE)
+			e.preventDefault()
+			e.stopPropagation()
 		}
 	}
+
 	function cancelEvent(e) {
-		e.stopPropagation();
-		return false;
+		e.preventDefault()
+		e.stopPropagation()
+		return false
 	}
 
 	// 将构建的 img 元素返回
-	return img;
-};
-},{"jquery":16,"jquery-mousewheel":15}],15:[function(require,module,exports){
+	return img
+}
+
+module.exports = ViewableImage
+},{"get-window-size":14,"jquery":16,"jquery-mousewheel":15}],14:[function(require,module,exports){
+/*
+ * http://andylangton.co.uk/blog/development/get-viewport-size-width-and-height-javascript
+ */
+(function (getWindowSize) {
+
+	if (typeof exports === 'object') {
+		module.exports = getWindowSize
+	} else {
+		window.getWindowSize = getWindowSize
+	}
+
+})(function () {
+
+	var viewportwidth
+	var viewportheight
+
+	if (typeof window.innerWidth != 'undefined') {
+		viewportwidth = window.innerWidth
+		viewportheight = window.innerHeight
+	}
+	else if (
+		typeof document.documentElement != 'undefined' &&
+		typeof document.documentElement.clientWidth != 'undefined' &&
+		document.documentElement.clientWidth != 0) {
+		viewportwidth = document.documentElement.clientWidth
+		viewportheight = document.documentElement.clientHeight
+	}
+	else {
+		var body = document.getElementsByTagName('body')[0]
+		viewportwidth = body.clientWidth
+		viewportheight = body.clientHeight
+	}
+
+	return {
+		width: viewportwidth,
+		height: viewportheight
+	}
+})
+
+},{}],15:[function(require,module,exports){
 /*!
  * jQuery Mousewheel 3.1.13
  *
@@ -11389,6 +11398,47 @@ return jQuery;
 }));
 
 },{}],17:[function(require,module,exports){
+var DEFAULT_DELAY_TIME = 50
+
+/*
+ * @param {function} fn
+ * @param {number} [delay] - ms
+ * @param {Object} [context] - used as `this` when call fn
+ * @returns {function}
+ */
+module.exports = function (fn, delay, context) {
+
+	if (typeof fn !== 'function') {
+		throw new Error('require fn')
+	}
+
+	if (arguments.length >= 2) {
+		if (typeof delay === 'number') {
+			delay = delay > 0 ? delay : DEFAULT_DELAY_TIME
+		} else { // (fn, context)
+			context = delay
+			delay = DEFAULT_DELAY_TIME
+		}
+	} else {
+		delay = DEFAULT_DELAY_TIME
+	}
+
+	var lazyTimer
+	var args
+	var self
+	var invokeFn = function () {
+		lazyTimer = null
+		fn.apply(self, args)
+	}
+
+	return function () {
+		self = context || this
+		args = arguments
+		if (lazyTimer) clearTimeout(lazyTimer)
+		lazyTimer = setTimeout(invokeFn, delay)
+	}
+}
+},{}],18:[function(require,module,exports){
 (function() {
 	var Utils = {};
 

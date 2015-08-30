@@ -25,6 +25,7 @@
     "image-viewer": "^0.2.3",
     "jquery": "^1.11.3",
     "jquery-mousewheel": "^3.1.13",
+    "lazy-invoke": "^0.1.0",
     "less-plugin-npm-import": "^2.1.0",
     "local-web-server": "^0.5.22",
     "xsm-less-utils": "^0.1.0",

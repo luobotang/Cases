@@ -2,7 +2,7 @@
 
 var $ = require('jquery');
 
-var LazyInvoke = require('../utils/lazy-invoke');
+var LazyInvoke = require('lazy-invoke');
 
 var items, activeItemIndex = -1,
 	// 目录结构部件
